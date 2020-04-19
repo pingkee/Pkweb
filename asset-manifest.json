@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/Pkweb.git/static/css/main.d1b05096.chunk.css",
+    "main.js": "/Pkweb.git/static/js/main.e3d59050.chunk.js",
+    "main.js.map": "/Pkweb.git/static/js/main.e3d59050.chunk.js.map",
+    "runtime-main.js": "/Pkweb.git/static/js/runtime-main.f1e1a3e3.js",
+    "runtime-main.js.map": "/Pkweb.git/static/js/runtime-main.f1e1a3e3.js.map",
+    "static/js/2.89239fd8.chunk.js": "/Pkweb.git/static/js/2.89239fd8.chunk.js",
+    "static/js/2.89239fd8.chunk.js.map": "/Pkweb.git/static/js/2.89239fd8.chunk.js.map",
+    "index.html": "/Pkweb.git/index.html",
+    "precache-manifest.37c12e8d0a1c560d994e756c1a26f603.js": "/Pkweb.git/precache-manifest.37c12e8d0a1c560d994e756c1a26f603.js",
+    "service-worker.js": "/Pkweb.git/service-worker.js",
+    "static/css/main.d1b05096.chunk.css.map": "/Pkweb.git/static/css/main.d1b05096.chunk.css.map",
+    "static/js/2.89239fd8.chunk.js.LICENSE.txt": "/Pkweb.git/static/js/2.89239fd8.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.f1e1a3e3.js",
+    "static/js/2.89239fd8.chunk.js",
+    "static/css/main.d1b05096.chunk.css",
+    "static/js/main.e3d59050.chunk.js"
+  ]
+}
