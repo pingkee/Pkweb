@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/Pkweb/static/css/main.d1b05096.chunk.css",
-    "main.js": "/Pkweb/static/js/main.7970a636.chunk.js",
-    "main.js.map": "/Pkweb/static/js/main.7970a636.chunk.js.map",
+    "main.js": "/Pkweb/static/js/main.edd9275c.chunk.js",
+    "main.js.map": "/Pkweb/static/js/main.edd9275c.chunk.js.map",
     "runtime-main.js": "/Pkweb/static/js/runtime-main.cc543329.js",
     "runtime-main.js.map": "/Pkweb/static/js/runtime-main.cc543329.js.map",
     "static/js/2.89239fd8.chunk.js": "/Pkweb/static/js/2.89239fd8.chunk.js",
     "static/js/2.89239fd8.chunk.js.map": "/Pkweb/static/js/2.89239fd8.chunk.js.map",
     "index.html": "/Pkweb/index.html",
-    "precache-manifest.4c472c783355f55cfdc691677c3f6039.js": "/Pkweb/precache-manifest.4c472c783355f55cfdc691677c3f6039.js",
+    "precache-manifest.c112bcd44d15214c0e9e7fe946e8b524.js": "/Pkweb/precache-manifest.c112bcd44d15214c0e9e7fe946e8b524.js",
     "service-worker.js": "/Pkweb/service-worker.js",
     "static/css/main.d1b05096.chunk.css.map": "/Pkweb/static/css/main.d1b05096.chunk.css.map",
     "static/js/2.89239fd8.chunk.js.LICENSE.txt": "/Pkweb/static/js/2.89239fd8.chunk.js.LICENSE.txt"
@@ -17,6 +17,6 @@
     "static/js/runtime-main.cc543329.js",
     "static/js/2.89239fd8.chunk.js",
     "static/css/main.d1b05096.chunk.css",
-    "static/js/main.7970a636.chunk.js"
+    "static/js/main.edd9275c.chunk.js"
   ]
 }
