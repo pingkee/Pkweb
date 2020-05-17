@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/Pkweb/static/css/main.478d95ba.chunk.css",
+    "main.css": "/Pkweb/static/css/main.309ead0f.chunk.css",
     "main.js": "/Pkweb/static/js/main.af4459ab.chunk.js",
     "main.js.map": "/Pkweb/static/js/main.af4459ab.chunk.js.map",
     "runtime-main.js": "/Pkweb/static/js/runtime-main.cc543329.js",
@@ -8,16 +8,16 @@
     "static/js/2.89239fd8.chunk.js": "/Pkweb/static/js/2.89239fd8.chunk.js",
     "static/js/2.89239fd8.chunk.js.map": "/Pkweb/static/js/2.89239fd8.chunk.js.map",
     "index.html": "/Pkweb/index.html",
-    "precache-manifest.608e21af62e9a12becdaf46464308f0a.js": "/Pkweb/precache-manifest.608e21af62e9a12becdaf46464308f0a.js",
+    "precache-manifest.c11d6bf20d563700c54de01395c35ad8.js": "/Pkweb/precache-manifest.c11d6bf20d563700c54de01395c35ad8.js",
     "service-worker.js": "/Pkweb/service-worker.js",
-    "static/css/main.478d95ba.chunk.css.map": "/Pkweb/static/css/main.478d95ba.chunk.css.map",
+    "static/css/main.309ead0f.chunk.css.map": "/Pkweb/static/css/main.309ead0f.chunk.css.map",
     "static/js/2.89239fd8.chunk.js.LICENSE.txt": "/Pkweb/static/js/2.89239fd8.chunk.js.LICENSE.txt",
     "static/media/Profile.png": "/Pkweb/static/media/Profile.d3166ee3.png"
   },
   "entrypoints": [
     "static/js/runtime-main.cc543329.js",
     "static/js/2.89239fd8.chunk.js",
-    "static/css/main.478d95ba.chunk.css",
+    "static/css/main.309ead0f.chunk.css",
     "static/js/main.af4459ab.chunk.js"
   ]
 }
