@@ -126,7 +126,7 @@ const App: React.FC = () => {
       <div
         style={{
           // display: 'flex',
-          width: 1200,
+          maxWidth: 1200,
           margin: 'auto',
           }}>
           <div
