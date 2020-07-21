@@ -117,6 +117,7 @@ const App: React.FC = () => {
         style={{
           // backgroundColor: '#282c34',
           margin: '0.5rem',
+          width: 800,
           // border: 'solid white 1px',
           // height: '80vh',
           display: 'flex',
