@@ -36,7 +36,7 @@ const App: React.FC = () => {
       margin: '0.5rem',
       border: 'solid lightblue 2px',
       backgroundColor: 'white',
-      textAlign: 'justify',
+      // textAlign: 'justify',
       width: 200,
       height: 350,
       padding: 15
@@ -45,19 +45,29 @@ const App: React.FC = () => {
           <img
             src={require("./public/Profile.png")}
             alt="My Pic"
-            style={{ height: 150, width: 150, borderRadius: 98, marginBottom: 30, marginLeft: 25}}
+            style={{ height: 150, width: 150, borderRadius: 98, marginBottom: 5, marginLeft: 25}}
             />
         <div style={{
           fontSize: 'calc(8px + 1vmin)',
           marginBottom: 10,
+          textAlign: 'center',
           fontWeight: 'bold', }}>
-          Ping Kee | Technopreneur day dreamer
+          Ng Ping Kee
+        </div>
+        <div style={{
+          fontSize: 'calc(3px + 1vmin)',
+          marginBottom: 25,
+          fontStyle: 'italic',
+          }}>
+          "If the technology is out there, it can be done." 
         </div>
         <div style={{
           fontSize: 'calc(7px + 1vmin)'}}>
-          - Web/Mobile (IOS & Android) Full Stack Developer
+          - Full Stack Developer
           <br />
-          - Scrum Master Certified
+          - Web/Mobile (IOS & Android)
+          <br />
+          - Scrum Alliance® Certified ScrumMaster®
       </div>
     </div>
   );
@@ -113,24 +123,31 @@ const App: React.FC = () => {
   );
   return (
     <div>
-        <div
+      <div
         style={{
-          // backgroundColor: '#282c34',
-          margin: '0.5rem',
-          width: 800,
-          // border: 'solid white 1px',
-          // height: '80vh',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignContent: 'space-between',
-          alignItems: 'stretch',
-          justifyContent: 'center',
+          // display: 'flex',
+          width: 1200,
+          margin: 'auto',
           }}>
-          {ProfileImage()}
-          {CurrentWork()}
-          {DeveloperEx()}
-          {CurrentStack()}
-        </div>
+          <div
+          style={{
+            // backgroundColor: '#282c34',
+            margin: '0.5rem',
+            // border: 'solid white 1px',
+            // height: '80vh',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignContent: 'space-between',
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            fontFamily: '"Times New Roman", Times, serif',
+            }}>
+            {ProfileImage()}
+            {CurrentWork()}
+            {DeveloperEx()}
+            {CurrentStack()}
+          </div>
+      </div>
     </div>
   );
 }

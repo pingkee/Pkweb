@@ -37,7 +37,7 @@ header {
   justify-content: center;
   /* font-size: calc(10px + 2vmin); */
   /* font-family: 'Playfair Display', serif; */
-  font-family: 'Times New Roman';
+  font-family: '"Times New Roman", Times, serif';
   color: white;
 }
 
