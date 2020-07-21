@@ -57,7 +57,7 @@ const App: React.FC = () => {
           Ng Ping Kee
         </div>
         <div style={{
-          fontSize: 'calc(12px + 0.3vmin)',
+          fontSize: 'calc(11px + 0.4vmin)',
           marginBottom: 20,
           fontStyle: 'italic',
           textAlign: 'center',
