@@ -10,7 +10,7 @@ const App: React.FC = () => {
       backgroundColor: 'white',
       textAlign: 'justify',
       width: 600,
-      height: 150,
+      minHeight: 150,
       padding: 15
       // minHeight: '100vh',
       }}>
@@ -18,14 +18,39 @@ const App: React.FC = () => {
           fontSize: 'calc(14px + 0.5vmin)',
           marginBottom: 10,
           fontWeight: 'bold', }}>
-          Current Work
+          About Me
         </div>
         <div style={{
           fontSize: 'calc(12px + 0.5vmin)' }}>
-          I am a Front end developer for ST Electronics in Singapore.
-          I am a hardcore fan of web and mobile development with great passion for
-          UI effects, animations and creating intuitive, dynamic user experiences. I build personal
-          webpages and mobile apps for leisure outside my working hours.
+            I am a full time Software Developer from ST Engineering (Infocomm) and have 
+            worked in a handful of Engineering company. I spend my free time reaching out 
+            to opportunities and challenges that are meaningful to me. 
+            <br />
+            <br />
+            I personally managed and developed end to end full stack applications and 
+            successfully deployed on AWS, Play store and the App Store. I developed 
+            strategies that helped convey the right message to the targeted audience 
+            and increase revenue with the highest ROI. 
+            <br />
+            <br />
+            At the core, I am just a dad who loves to listen to problems and figure 
+            out solutions together as a team. Similarly, in our workplace, I strongly 
+            believe that our jobs are the second family in our life. And working together 
+            as a family is essential to the success of the project. 
+            <br />
+            <br />
+            Skills that I have acquired throughout time are and not limited to, React JS, 
+            React Native, Unity3D, AWS, docker, etc.
+            <br />
+            <br />
+            — I've never stopped engaging my passion to imporove and to help others solve 
+            various complex problems.
+            <br />
+            <br />
+            As a web developer, I enjoy using my obsessive attention to detail, my "never say die"
+            attitude for making things work and always creating intuitive, dynamic user experiences.
+            <br />
+            <br />
       </div>
     </div>
   );
@@ -38,7 +63,7 @@ const App: React.FC = () => {
       backgroundColor: 'white',
       // textAlign: 'justify',
       width: 200,
-      height: 350,
+      minHeight: 350,
       padding: 15
       // minHeight: '100vh',
       }}>
@@ -96,19 +121,69 @@ const App: React.FC = () => {
           
           <ul style={{padding: 0}}>
             1. Software Developer at ST Electronics (Current)
+            <br />
+            <br />
+            Achieved Defence Technology Prize (Engineering) 2021 for the Company as a core developer part of the COVID-19 Command and Control Systems Team
+            <br />
+            <br />
+            Job Scope:<br />
+            <br />
             <ol>
-              - Work with various team to design, build and manage a custom webapp (Full Stack)
+            - Full Stack Developer for web application using React, typescript, 
+            feathersJS, adopting Scrum methodology. Concurrently overseeing 
+            video system integration, and mobile integration.
+            </ol>
+            <br />
+            <ol>
+            - Project application was used in several national events such 
+            as NDP, Covid-19 etc.
+            </ol>
+            <br />
+            <ol>
+            - Adopt Agile Methodology as a Scrum Master, conducted daily scrum, 
+            sprint planning, reviews and retrospective
+            </ol>
+            <br />
+            <ol>
+              - Review User Interface(UI) design and implement into application
             </ol>
           </ul>
           <ul style={{padding: 0}}>
             2. Worked with Infosys to build backend products for DBS Bank Siingapore
+            <br />
+            <br />
+            Job Scope:<br />
+            <br />
             <ol>
-              - developing fincale API<br />
-              - data migration<br />
+              Assisted with project requirements gathering.
+            </ol>
+            <br />
+            <ol>
+              Development work Finacle API (Backend service)
+            </ol>
+            <br />
+            <ol>
+              Finacle API Debugging
+            </ol>
+            <br />
+            <ol>
+              Data Migration with Fincale Scripting.
+            </ol>
+            3. Worked with Infosys to build report generation products for Sing Investment & Finance Limited
+            <br />
+            <br />
+            Job Scope:<br />
+            <br />
+            <ol>
+              - Working closely with a team to determine project requirements and communicating it to stakeholders involved
+            </ol>
+            <br />
+            <ol>
+              - Developing unique and customised report that meets the business needs of the client
             </ol>
           </ul>
           <ul style={{padding: 0}}>
-            3. Privately build Web App and Mobile Apps for leisure
+            4. Privately build Web App and Mobile Apps for leisure
           </ul>
       </div>
     </div>
@@ -132,8 +207,10 @@ const App: React.FC = () => {
         </div>
         <div style={{
           fontSize: 'calc(12px + 0.5vmin)'}}>
-            - ReactJS, React Native, HTML, CSS, Javascript, nodeJs<br />
-            - FeathersJS, PHP, MongoDB, MySQL
+            - ReactJS, React Native, HTML, CSS, Javascript, 
+            TypeScript, NodeJs <br />
+            <br />
+            - NodeJs, FeathersJS, PHP, MongoDB, MySQL, ExpressJS, NGINX, Docker
       </div>
     </div>
   );
