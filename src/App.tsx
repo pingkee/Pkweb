@@ -54,7 +54,6 @@ const App: React.FC = () => {
       </div>
     </div>
   );
-  
   const ProfileImage = () => (
     <div
     style={{
@@ -106,7 +105,7 @@ const App: React.FC = () => {
       backgroundColor: 'white',
       border: 'solid lightblue 2px',
       // textAlign: 'justify',
-      width: 400,
+      width: 850,
       padding: 15
       // minHeight: '100vh',
       }}>
@@ -123,10 +122,13 @@ const App: React.FC = () => {
             1. Software Developer at ST Electronics (Current)
             <br />
             <br />
-            Achieved Defence Technology Prize (Engineering) 2021 for the Company as a core developer part of the COVID-19 Command and Control Systems Team
+            Achieved Defence Technology Prize (Engineering) 2021 for the Company as a 
+            core developer part of the COVID-19 Command and Control Systems Team
             <br />
             <br />
-            Job Scope:<br />
+            <ol>
+            Job Scope: 
+            </ol>
             <br />
             <ol>
             - Full Stack Developer for web application using React, typescript, 
@@ -152,18 +154,20 @@ const App: React.FC = () => {
             2. Worked with Infosys to build backend products for DBS Bank Siingapore
             <br />
             <br />
-            Job Scope:<br />
-            <br />
             <ol>
-              Assisted with project requirements gathering.
+            Job Scope: 
             </ol>
             <br />
             <ol>
-              Development work Finacle API (Backend service)
+              - Assisted with project requirements gathering.
             </ol>
             <br />
             <ol>
-              Finacle API Debugging
+              - Development work Finacle API (Backend service)
+            </ol>
+            <br />
+            <ol>
+              - Finacle API Debugging
             </ol>
             <br />
             <ol>
@@ -172,7 +176,9 @@ const App: React.FC = () => {
             3. Worked with Infosys to build report generation products for Sing Investment & Finance Limited
             <br />
             <br />
-            Job Scope:<br />
+            <ol>
+            Job Scope: 
+            </ol>
             <br />
             <ol>
               - Working closely with a team to determine project requirements and communicating it to stakeholders involved
@@ -214,6 +220,35 @@ const App: React.FC = () => {
       </div>
     </div>
   );
+  const MyProjects = () => (
+    <div
+    style={{
+      margin: '0.5rem',
+      border: 'solid lightblue 2px',
+      backgroundColor: 'white',
+      textAlign: 'justify',
+      width: 400,
+      padding: 15
+      // minHeight: '100vh',
+      }}>
+        <div style={{
+          fontSize: 'calc(16px + 0.5vmin',
+          marginBottom: 10,
+          fontWeight: 'bold', }}>
+          My Projects
+        </div>
+        <div style={{
+          fontSize: 'calc(12px + 0.5vmin)'}}>
+            IOS: <a href={"https://apps.apple.com/us/app/res-test-singapore/id1538316152"}>RES TEST</a> <br />
+            <br />
+            Android: <a href={"https://play.google.com/store/apps/details?id=com.restest"}>RES TEST</a> 
+            <br />
+            {/* My user account:
+            <a href={"https://play.google.com/store/apps/developer?id=Ping+Kee+Ng"}>Play Store</a>  */}
+            
+      </div>
+    </div>
+  );
   return (
     <div>
       <div
@@ -239,6 +274,7 @@ const App: React.FC = () => {
             {CurrentWork()}
             {DeveloperEx()}
             {CurrentStack()}
+            {MyProjects()}
           </div>
       </div>
     </div>
