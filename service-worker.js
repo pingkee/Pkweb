@@ -1,39 +1,27 @@
-/**
- * Welcome to your Workbox-powered service worker!
- *
- * You'll need to register this file in your web app and you should
- * disable HTTP caching for this file too.
- * See https://goo.gl/nhQhGp
- *
- * The rest of the code is auto-generated. Please don't update this file
- * directly; instead, make changes to your Workbox build configuration
- * and re-run your build process.
- * See https://goo.gl/2aRDsh
+/*
+ * This site no longer uses a service worker. This worker exists only to clean up
+ * the Workbox service worker installed by the previous Create React App build.
  */
-
-importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
-
-importScripts(
-  "/precache-manifest.0ca804870f5ba0105b6fab179b3fb121.js"
-);
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+self.addEventListener('install', function () {
+  self.skipWaiting();
 });
 
-workbox.core.clientsClaim();
+self.addEventListener('activate', function (event) {
+  event.waitUntil((async function () {
+    try {
+      var keys = await caches.keys();
+      await Promise.all(keys.map(function (key) { return caches.delete(key); }));
+    } catch (e) {}
 
-/**
- * The workboxSW.precacheAndRoute() method efficiently caches and responds to
- * requests for URLs in the manifest.
- * See https://goo.gl/S9QRab
- */
-self.__precacheManifest = [].concat(self.__precacheManifest || []);
-workbox.precaching.precacheAndRoute(self.__precacheManifest, {});
+    try {
+      await self.registration.unregister();
+    } catch (e) {}
 
-workbox.routing.registerNavigationRoute(workbox.precaching.getCacheKeyForURL("/index.html"), {
-  
-  blacklist: [/^\/_/,/^\/project-management(\/|$)/,/\/[^/?]+\.[^/]+$/],
+    try {
+      var clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      clients.forEach(function (client) {
+        if (client.navigate) client.navigate(client.url).catch(function () {});
+      });
+    } catch (e) {}
+  })());
 });
