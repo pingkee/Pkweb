@@ -20,6 +20,9 @@ h2{font-size:16px;margin:0}
 .sub{color:var(--muted);font-size:12px;margin-top:3px}
 
 .setup-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end}
+.sync-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+@media(max-width:700px){.sync-grid{grid-template-columns:1fr}}
+code{background:#eef0f7;border-radius:5px;padding:1px 5px;font-size:12px}
 label{display:block;font-size:12px;color:#4d5870;font-weight:700;margin-bottom:6px}
 input,select,button{font:inherit}
 input[type=text],input[type=number],select{width:100%;border:1px solid #d7dce7;border-radius:9px;padding:10px 11px;background:white;color:var(--ink);outline:none}
@@ -229,13 +232,32 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
 <section class="panel">
   <div class="section-head">
     <div><h2>7. Task register</h2><div class="sub">Detailed breakdown of task start/finish dates and proportional spans.</div></div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       <input type="file" id="importFile" accept=".csv" style="display:none">
       <button class="secondary" id="importBtn">Import CSV</button>
       <button class="secondary" id="exportCsv">Export CSV</button>
+      <button class="primary" id="saveGithub">Save to GitHub</button>
     </div>
   </div>
   <div class="table-wrap"><table><thead><tr><th>Task</th><th class="num">Effort (MM)</th><th class="num">Max Persons</th><th class="num">Duration (Mo)</th><th>Start date</th><th>Finish date</th><th>Status</th><th>Blocker remark</th><th></th></tr></thead><tbody id="jobTable"></tbody></table></div>
+</section>
+
+<section class="panel">
+  <div class="section-head">
+    <div><h2>8. GitHub repository sync</h2><div class="sub">Stores the roadmap CSV in <strong>pingkee/Pkweb</strong> on <strong>gh-pages</strong> at <code>project-management/data/roadmap_tasks.csv</code>. The file is auto-imported every time this page loads.</div></div>
+    <button class="secondary" id="reloadGithub">Reload from GitHub</button>
+  </div>
+  <div class="sync-grid">
+    <div>
+      <label for="githubToken">GitHub token (fine-grained PAT with Contents: Read and write)</label>
+      <input type="password" id="githubToken" autocomplete="off" spellcheck="false" placeholder="github_pat_...">
+    </div>
+    <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#4d5870;height:38px;margin:0;cursor:pointer">
+      <input type="checkbox" id="rememberToken" style="width:auto"> Remember token on this device
+    </label>
+  </div>
+  <div class="status" id="syncStatus" style="margin-top:12px">Auto-import runs on every page load.</div>
+  <div class="sub" style="margin-top:8px">The token is kept only in this browser and is sent only to api.github.com. It is never committed. Unsaved page changes are replaced by the stored CSV on reload.</div>
 </section>
 </main>
 
@@ -261,6 +283,9 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
 const $=id=>document.getElementById(id);
 const monthsNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const defaultPalette=['#5b63e8','#008f9c','#8b5cc7','#d46a3b','#3478c5','#b34d7c','#6c8f2e','#6875a8'];
+
+const GITHUB_CONFIG={owner:'pingkee',repo:'Pkweb',branch:'gh-pages',path:'project-management/data/roadmap_tasks.csv'};
+const GITHUB_TOKEN_KEY='pk_github_token';
 
 let teamSize=3, year=new Date().getFullYear(), currentMonth=new Date().getMonth()+1, jobs=[], nextId=1;
 let editingJobId = null;
@@ -1095,9 +1120,8 @@ $('addGroupBtn').addEventListener('click', ()=>{ addTaskGroup('New group'); rend
 
 bindGanttBarDrag($('ganttChart'));
 
-// CSV Import/Export
-$('exportCsv').addEventListener('click', ()=>{
-  if(!jobs.length){setStatus('No tasks to export.','warn');return;}
+// CSV serialization / import
+function serializeCsv(){
   let csv='Name,MM,MaxPersons,StartMonth,StartYear,Group,GroupColor,Blocker\n';
   jobs.forEach(j=>{
     let sM, sY;
@@ -1109,7 +1133,65 @@ $('exportCsv').addEventListener('click', ()=>{
     }
     csv+=`"${j.name.replace(/"/g,'""')}",${j.mm},${j.maxPeople},${sM},${sY},"${groupName(j).replace(/"/g,'""')}","${groupColor(j)}","${(j.blocker||'').replace(/"/g,'""')}"\n`;
   });
-  const blob=new Blob([csv],{type:'text/csv'});
+  return csv;
+}
+
+function importCsvText(text){
+  // Replace the current plan and group definitions with the ones in this CSV.
+  taskGroups = [];
+  nextGroupId = 1;
+  jobs = [];
+  nextId = 1;
+  editingJobId = null;
+  editingTableId = null;
+  const lines=String(text).split(/\r?\n/);
+  let count=0;
+  for(let i=1; i<lines.length; i++){
+    const line=lines[i].trim();
+    if(!line)continue;
+    const parts=line.match(/(".*?"|[^",\s]+)(?=\s*,\s*|\s*$)/g);
+    if(parts && parts.length>=5){
+      const name=parts[0].replace(/^"|"$/g,'').replace(/""/g,'"');
+      const mm=Number(parts[1]);
+      const maxPeople=Number(parts[2]);
+      const sM=Number(parts[3]);
+      const sY=Number(parts[4]);
+      const groupRaw = parts[5] ? parts[5].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
+      const groupColorRaw = parts[6] ? parts[6].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
+      const blockerRaw = parts[7] ? parts[7].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
+      const gcolor = (groupColorRaw && HEX_RE.test(groupColorRaw)) ? normalizeHex(groupColorRaw) : null;
+      if(name && Number.isFinite(mm) && Number.isFinite(maxPeople)){
+        const isBacklog = (sM < 0 || !Number.isFinite(sM));
+        let gid = (taskGroups[0] && taskGroups[0].id) || null;
+        if(groupRaw){
+          let g = taskGroups.find(x => x.name.toLowerCase() === groupRaw.toLowerCase());
+          if(!g){
+            g = addTaskGroup(groupRaw, gcolor || undefined);
+          } else if(gcolor){
+            g.color = gcolor;
+          }
+          gid = g.id;
+        }
+        jobs.push({id:nextId++, name, mm, maxPeople, groupId: gid, customStartAbs: isBacklog ? undefined : (sY*12)+sM, blocker: blockerRaw});
+        count++;
+      }
+    }
+  }
+  // Only fall back to a default group when the CSV defines none.
+  if(taskGroups.length === 0){
+    addTaskGroup('Group 1', defaultPalette[0]);
+  }
+  // Re-point any task at a valid group.
+  jobs.forEach(job => {
+    if(!taskGroups.some(g => g.id === job.groupId)) job.groupId = taskGroups[0].id;
+  });
+  render();
+  return count;
+}
+
+$('exportCsv').addEventListener('click', ()=>{
+  if(!jobs.length){setStatus('No tasks to export.','warn');return;}
+  const blob=new Blob([serializeCsv()],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url; a.download='roadmap_tasks.csv';
@@ -1125,51 +1207,7 @@ $('importFile').addEventListener('change', e=>{
   const reader=new FileReader();
   reader.onload=evt=>{
     try{
-      // Replace existing/default group definitions with the ones in this CSV.
-      taskGroups = [];
-      nextGroupId = 1;
-      const lines=evt.target.result.split(/\r?\n/);
-      let count=0;
-      for(let i=1; i<lines.length; i++){
-        const line=lines[i].trim();
-        if(!line)continue;
-        const parts=line.match(/(".*?"|[^",\s]+)(?=\s*,\s*|\s*$)/g);
-        if(parts && parts.length>=5){
-          const name=parts[0].replace(/^"|"$/g,'').replace(/""/g,'"');
-          const mm=Number(parts[1]);
-          const maxPeople=Number(parts[2]);
-          const sM=Number(parts[3]);
-          const sY=Number(parts[4]);
-          const groupRaw = parts[5] ? parts[5].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
-          const groupColorRaw = parts[6] ? parts[6].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
-          const blockerRaw = parts[7] ? parts[7].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
-          const gcolor = (groupColorRaw && HEX_RE.test(groupColorRaw)) ? normalizeHex(groupColorRaw) : null;
-          if(name && Number.isFinite(mm) && Number.isFinite(maxPeople)){
-            const isBacklog = (sM < 0 || !Number.isFinite(sM));
-            let gid = (taskGroups[0] && taskGroups[0].id) || null;
-            if(groupRaw){
-              let g = taskGroups.find(x => x.name.toLowerCase() === groupRaw.toLowerCase());
-              if(!g){
-                g = addTaskGroup(groupRaw, gcolor || undefined);
-              } else if(gcolor){
-                g.color = gcolor;
-              }
-              gid = g.id;
-            }
-            jobs.push({id:nextId++, name, mm, maxPeople, groupId: gid, customStartAbs: isBacklog ? undefined : (sY*12)+sM, blocker: blockerRaw});
-            count++;
-          }
-        }
-      }
-      // Only fall back to a default group when the CSV defines none.
-      if(taskGroups.length === 0){
-        addTaskGroup('Group 1', defaultPalette[0]);
-      }
-      // Re-point tasks left over from a previous roadmap at a valid group.
-      jobs.forEach(job => {
-        if(!taskGroups.some(g => g.id === job.groupId)) job.groupId = taskGroups[0].id;
-      });
-      render();
+      const count=importCsvText(evt.target.result);
       setStatus(`Successfully imported ${count} tasks from CSV.`,'ok');
     }catch(err){
       setStatus('Failed to parse CSV file.','error');
@@ -1477,7 +1515,155 @@ function safeVbaString(str) {
   return String(str || '').replace(/"/g, '""');
 }
 
+// GitHub repository sync ---------------------------------------------------
+function getStoredToken(){
+  try{ return localStorage.getItem(GITHUB_TOKEN_KEY) || sessionStorage.getItem(GITHUB_TOKEN_KEY) || ''; }
+  catch(e){ return ''; }
+}
+function persistToken(){
+  const token=$('githubToken').value.trim();
+  const remember=$('rememberToken').checked;
+  try{
+    if(remember && token) localStorage.setItem(GITHUB_TOKEN_KEY, token); else localStorage.removeItem(GITHUB_TOKEN_KEY);
+    if(token) sessionStorage.setItem(GITHUB_TOKEN_KEY, token); else sessionStorage.removeItem(GITHUB_TOKEN_KEY);
+  }catch(e){}
+}
+function setSyncStatus(msg,type='',linkUrl){
+  const el=$('syncStatus');
+  el.className='status '+type;
+  el.textContent=msg;
+  if(linkUrl){
+    const a=document.createElement('a');
+    a.href=linkUrl; a.target='_blank'; a.rel='noopener'; a.textContent=' View commit';
+    el.appendChild(a);
+  }
+}
+function utf8ToBase64(str){
+  const bytes=new TextEncoder().encode(str);
+  let binary='';
+  for(let i=0;i<bytes.length;i+=0x8000){
+    binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
+  }
+  return btoa(binary);
+}
+function base64ToUtf8(b64){
+  const binary=atob(String(b64).replace(/\s/g,''));
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function githubContentsPath(){
+  return `/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
+}
+async function githubRequest(path, options={}, token){
+  const headers={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(options.headers||{})};
+  if(token) headers.Authorization=`Bearer ${token}`;
+  return fetch(`https://api.github.com${path}`, {...options, headers, cache:'no-store'});
+}
+async function githubErrorMessage(res){
+  let msg=`GitHub API error (${res.status}).`;
+  try{
+    const data=await res.json();
+    if(data && data.message) msg=`${data.message} (${res.status})`;
+  }catch(e){}
+  if(res.status===401) msg='GitHub token is invalid or expired.';
+  else if(res.status===403) msg='GitHub token needs Contents: Read and write permission for this repository (or the rate limit was hit).';
+  else if(res.status===404) msg='GitHub could not find the repository, branch, or file. Check that the token can access it.';
+  else if(res.status===409 || res.status===422) msg='The file changed on GitHub. Reload from GitHub, then save again.';
+  return msg;
+}
+async function fetchCsvFromGithub(token){
+  let apiError=null;
+  if(token){
+    try{
+      const res=await githubRequest(`${githubContentsPath()}?ref=${GITHUB_CONFIG.branch}`,{},token);
+      if(res.ok){
+        const data=await res.json();
+        if(data && data.content) return {text:base64ToUtf8(data.content), source:'GitHub API', apiError:null};
+        apiError='GitHub returned an unexpected response.';
+      }else if(res.status!==404){
+        apiError=await githubErrorMessage(res);
+      }
+    }catch(err){
+      apiError=err.message || 'Could not reach api.github.com.';
+    }
+  }
+  const res=await fetch(`data/roadmap_tasks.csv?t=${Date.now()}`,{cache:'no-store'});
+  if(!res.ok){
+    if(apiError) throw new Error(apiError);
+    throw new Error(res.status===404 ? 'No data/roadmap_tasks.csv has been saved yet.' : `Could not load the CSV (${res.status}).`);
+  }
+  return {text:await res.text(), source:'GitHub Pages', apiError};
+}
+async function loadCsvFromGithub(announce){
+  if(announce) setSyncStatus('Loading data/roadmap_tasks.csv from GitHub…');
+  const token=$('githubToken').value.trim();
+  try{
+    const result=await fetchCsvFromGithub(token);
+    const count=importCsvText(result.text);
+    let msg=`Auto-imported ${count} task${count===1?'':'s'} from ${result.source}.`;
+    if(result.apiError) msg+=` Token not used: ${result.apiError}`;
+    setSyncStatus(msg, result.apiError ? 'warn' : 'ok');
+  }catch(err){
+    if(announce) setSyncStatus(err.message,'error');
+    else setSyncStatus('No saved roadmap loaded yet. Save your plan to GitHub to enable auto-import.','warn');
+  }
+}
+async function saveCsvToGithub(){
+  const token=$('githubToken').value.trim();
+  if(!token){ setSyncStatus('Enter a GitHub token before saving.','error'); $('githubToken').focus(); return; }
+  persistToken();
+  if(!jobs.length){ setSyncStatus('There are no tasks to save.','warn'); return; }
+  setSyncStatus('Saving data/roadmap_tasks.csv to GitHub…');
+  try{
+    let sha=null;
+    const getRes=await githubRequest(`${githubContentsPath()}?ref=${GITHUB_CONFIG.branch}`,{},token);
+    if(getRes.ok){
+      const data=await getRes.json();
+      sha=data.sha;
+    }else if(getRes.status!==404){
+      throw new Error(await githubErrorMessage(getRes));
+    }
+
+    const body={
+      message:`Update roadmap tasks (${new Date().toISOString().slice(0,16).replace('T',' ')} UTC)`,
+      content:utf8ToBase64(serializeCsv()),
+      branch:GITHUB_CONFIG.branch
+    };
+    if(sha) body.sha=sha;
+
+    const putRes=await githubRequest(githubContentsPath(),{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    },token);
+    if(!putRes.ok) throw new Error(await githubErrorMessage(putRes));
+
+    const result=await putRes.json();
+    const commitUrl=(result && result.commit) ? result.commit.html_url : null;
+    setSyncStatus(`Saved ${jobs.length} task${jobs.length===1?'':'s'} to GitHub.`, 'ok', commitUrl);
+  }catch(err){
+    setSyncStatus(err.message || 'Failed to save to GitHub.','error');
+  }
+}
+
+$('saveGithub').addEventListener('click', saveCsvToGithub);
+$('reloadGithub').addEventListener('click', ()=>{
+  if(jobs.length && !confirm('Replace the tasks on this page with the CSV saved on GitHub?')) return;
+  persistToken();
+  loadCsvFromGithub(true);
+});
+$('rememberToken').addEventListener('change', persistToken);
+$('githubToken').addEventListener('change', persistToken);
+
+(function initGithubSync(){
+  const stored=getStoredToken();
+  if(stored) $('githubToken').value=stored;
+  try{ $('rememberToken').checked=!!localStorage.getItem(GITHUB_TOKEN_KEY); }catch(e){}
+})();
+
 render();
+loadCsvFromGithub(false);
 })();
 </script>
 </body>
