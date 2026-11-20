@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concurrent Proportional Roadmap Planner - Gantt Chart</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--ink:#172033;--muted:#667085;--line:#e4e8f0;--accent:#5b63e8;--accent-light:#eef0ff;--green:#16845b;--amber:#b76e00;--red:#c43d4b;--shadow:0 8px 24px rgba(20,32,60,.06)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+
+header{padding:25px 30px 20px;background:linear-gradient(120deg,#20294a,#3945a7);color:white}
+header .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;font-weight:700}
+header h1{font-size:26px;margin:5px 0;letter-spacing:-.03em}
+header p{margin:0;color:#dce1ff;max-width:850px}
+main{max-width:1600px;margin:auto;padding:22px;display:grid;gap:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:18px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+h2{font-size:16px;margin:0}
+.sub{color:var(--muted);font-size:12px;margin-top:3px}
+
+.setup-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end}
+label{display:block;font-size:12px;color:#4d5870;font-weight:700;margin-bottom:6px}
+input,select,button{font:inherit}
+input[type=text],input[type=number],select{width:100%;border:1px solid #d7dce7;border-radius:9px;padding:10px 11px;background:white;color:var(--ink);outline:none}
+input[type=color]{width:100%;height:38px;padding:2px;border:1px solid #d7dce7;border-radius:9px;background:white;cursor:pointer}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #5b63e81c}
+button{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:700}
+.primary{background:var(--accent);color:white}
+.secondary{background:#eef0f7;color:#303a52}
+.danger{background:#fff0f1;color:#b82f3d;padding:6px 9px;font-size:12px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#fbfcff}
+.kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.kpi .value{font-size:24px;font-weight:800;letter-spacing:-.04em;margin-top:3px}
+.kpi .detail{font-size:11px;color:var(--muted)}
+
+.workspace{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:18px;align-items:start}
+.panel-stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.job-list{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto}
+.job-card{border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:white;display:flex;gap:9px;align-items:center;user-select:none}
+.job-card.editing{flex-direction:column;align-items:stretch;background:#f8f9fc;border-color:var(--accent)}
+.job-main{min-width:0;flex:1}
+.job-name{font-weight:750;overflow-wrap:anywhere}
+.job-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.tag{font-size:11px;font-weight:800;padding:4px 7px;border-radius:7px;background:#f0f1ff;color:#555cce;white-space:nowrap}
+.empty{padding:22px 12px;border:1px dashed #cfd5e2;border-radius:11px;text-align:center;color:var(--muted);background:#fafbfe}
+.group-list{display:flex;flex-direction:column;gap:8px}
+.group-row{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:white}
+.group-row input[type=text]{flex:1}
+.order-btns{display:flex;flex-direction:column;gap:2px}
+.order-btns button{background:#eef0f7;color:#303a52;padding:2px 6px;font-size:10px;border-radius:4px}
+.year-nav{display:flex;align-items:center;gap:9px}
+.year-label{font-size:20px;font-weight:850;min-width:72px;text-align:center;letter-spacing:-.03em}
+
+.gantt-wrapper{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:white}
+.gantt-container{min-width:900px;display:grid;grid-template-columns:repeat(12, 1fr);position:relative}
+
+/* Gantt Header */
+.gantt-header-month{padding:10px 4px;background:#f0f2f8;border-bottom:2px solid var(--line);border-right:1px solid var(--line);text-align:center;font-size:11px;font-weight:800}
+.gantt-header-month.current{background:#fff0c9;color:#8b5700}
+.gantt-header-month small{display:block;font-size:9px;color:var(--muted);font-weight:600}
+
+/* Gantt Task Rows */
+.gantt-row-track{grid-column: span 12;display:grid;grid-template-columns:repeat(12, 1fr);border-bottom:1px solid var(--line);position:relative;background:#fff}
+
+/* Gantt Grid Columns (Background grid lines) */
+.gantt-grid-col{border-right:1px solid #edf0f5;height:100%;min-height:40px;position:relative}
+.gantt-grid-col.current{background:rgba(255, 240, 201, 0.25)}
+
+/* Gantt Bar Positioning */
+.gantt-bar-wrapper{position:absolute;top:8px;bottom:8px;display:flex;align-items:center;z-index:2;pointer-events:auto;cursor:grab}
+.gantt-bar-wrapper:active{cursor:grabbing}
+.gantt-bar-wrapper.dragging{opacity:0.5;transform:scale(0.98)}
+.gantt-bar{width:100%;height:100%;border-radius:8px;padding:0 10px;display:flex;align-items:center;justify-content:flex-end;color:white;font-size:11px;font-weight:700;box-shadow:0 3px 8px rgba(23,32,51,0.15);transition:transform .15s ease, box-shadow .15s ease;overflow:visible;position:relative}
+.gantt-bar:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(23,32,51,0.25);z-index:10}
+
+.gantt-bar-title{position:absolute;white-space:nowrap;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:700;color:white;cursor:grab;user-select:none;pointer-events:auto;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.gantt-bar-title:active{cursor:grabbing}
+.gantt-bar-badge{background:rgba(0,0,0,0.2);padding:2px 6px;border-radius:4px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto;z-index:3}
+.gantt-label-layer{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10}
+.gantt-tail{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.gantt-tail line{stroke:rgba(23,32,51,.5);stroke-width:1.5;stroke-dasharray:3 3}
+
+/* Utilization Summary Row */
+.gantt-util-col{padding:8px 4px;background:#f8fafc;border-top:2px solid var(--line);border-right:1px solid var(--line);text-align:center;font-size:11px;font-weight:700}
+
+/* Modal Popup Styles */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;justify-content:center;align-items:center;z-index:1000}
+.modal-box{background:white;padding:24px;border-radius:14px;max-width:500px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.15)}
+.modal-box h3{margin-top:0;font-size:18px;color:var(--ink)}
+.modal-box ol{padding-left:20px;font-size:13px;color:#334155;line-height:1.6}
+.modal-box ol li{margin-bottom:8px}
+
+/* Status & Tables */
+.status{margin-top:14px;font-size:12px;padding:9px 11px;border-radius:9px;background:#f5f7fb;color:#536078}
+.status.warn{background:#fff7e7;color:#946000}
+.status.error{background:#fff0f1;color:#b82f3d}
+.status.ok{background:#eaf8f1;color:#13724d}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 9px;border-bottom:1px solid #edf0f5;font-size:12px}
+th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+th.num,td.num{text-align:right}
+.state{font-size:10px;font-weight:800;padding:4px 7px;border-radius:6px;display:inline-block;background:#f0f1ff;color:#565dcc}
+.state.pending{background:#fff7e7;color:#946000}
+.color-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
+footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
+
+@media(max-width:1000px){.workspace{grid-template-columns:1fr}.setup-grid{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Concurrent Proportional Capacity Planning</div>
+  <h1>Annual Man-Month Roadmap Planner</h1>
+  <p>Gantt chart visualization for concurrent tasks sharing monthly team capacity proportionally.</p>
+</header>
+<main>
+<section class="panel">
+  <div class="section-head"><div><h2>1. Plan settings</h2><div class="sub">Set team size (monthly MM capacity) and current timeframe.</div></div></div>
+  <div class="setup-grid">
+    <div><label for="teamSize">Team size (people / monthly MM)</label><input id="teamSize" type="number" min="1" max="500" value="3"></div>
+    <div><label for="currentMonth">Current month (1–12)</label><input id="currentMonth" type="number" min="1" max="12" value="1"></div>
+    <div><label for="plannerTitle">Plan name (optional)</label><input id="plannerTitle" type="text" placeholder="e.g. Product delivery roadmap"></div>
+    <button class="primary" id="applySettings">Update settings</button>
+  </div>
+</section>
+
+<section class="kpis">
+  <div class="kpi"><div class="label">Total tasks</div><div class="value" id="kpiJobs">0</div><div class="detail">In roadmap queue</div></div>
+  <div class="kpi"><div class="label">Annual capacity</div><div class="value" id="kpiCapacity">36</div><div class="detail" id="kpiCapacityDetail">3 people × 12 months</div></div>
+  <div class="kpi"><div class="label">Remaining capacity</div><div class="value" id="kpiRemaining">36</div><div class="detail" id="kpiRemainingDetail">Available effort onward</div></div>
+  <div class="kpi"><div class="label">Timeline Span</div><div class="value" id="kpiSpan" style="font-size:18px;margin-top:6px">0 months</div><div class="detail" id="kpiSpanDetail">Total execution duration</div></div>
+</section>
+
+<section class="panel">
+  <div class="section-head">
+    <div><h2>2. Task groups</h2><div class="sub">Define color groups. Assign each task to a group to inherit its color.</div></div>
+    <button class="primary" id="addGroupBtn">+ Add group</button>
+  </div>
+  <div class="group-list" id="groupList"></div>
+</section>
+
+<section class="workspace">
+  <div class="panel-stack">
+    <section class="panel">
+      <div class="section-head"><div><h2>3. Add task</h2><div class="sub">Define a task and pick a start month, or leave it in backlog.</div></div></div>
+      <form id="jobForm">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:9px;margin-bottom:10px">
+          <div><label for="jobName">Task name</label><input id="jobName" type="text" maxlength="100" placeholder="e.g. Mobile app redesign" required></div>
+          <div style="min-width:150px"><label for="jobGroup">Task group</label><select id="jobGroup"></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px">
+          <div><label for="jobMM">Effort (man-months)</label><input id="jobMM" type="number" min=".25" max="5000" step=".25" value="6" required></div>
+          <div><label for="maxPeople">Max persons (concurrency limit)</label><input id="maxPeople" type="number" min="1" max="500" value="1" required></div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label for="jobBlocker">Blocker remark (optional)</label>
+          <input id="jobBlocker" type="text" maxlength="500" placeholder="e.g. Waiting on security approval">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:9px;align-items:end;margin-bottom:10px">
+          <div>
+            <label for="startMonthSelect">Start month</label>
+            <select id="startMonthSelect">
+              <option value="">Backlog (no start date)</option>
+              <option value="0" selected>January</option>
+              <option value="1">February</option>
+              <option value="2">March</option>
+              <option value="3">April</option>
+              <option value="4">May</option>
+              <option value="5">June</option>
+              <option value="6">July</option>
+              <option value="7">August</option>
+              <option value="8">September</option>
+              <option value="9">October</option>
+              <option value="10">November</option>
+              <option value="11">December</option>
+            </select>
+          </div>
+          <div>
+            <label for="startYearInput">Start year</label>
+            <input id="startYearInput" type="number" min="2000" max="2100" value="2026" required>
+          </div>
+          <button class="primary" type="submit">+ Add task</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><h2>4. Scheduled tasks</h2><div class="sub">Assigned tasks plotted on the timeline, in priority order.</div></div><span class="tag" id="scheduledCount">0 tasks</span></div>
+      <div class="job-list" id="jobList"></div>
+      <div class="sub" style="margin-top:12px">Tasks run concurrently. When monthly capacity is reached, effort is split proportionally. You can also restrict individual tasks to a maximum number of assignees (e.g. 1 person = max 1 MM per month).</div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><h2>5. Backlog</h2><div class="sub">Unassigned tasks awaiting a start month.</div></div><span class="tag" id="backlogCount">0 tasks</span></div>
+      <div class="job-list" id="backlogList"></div>
+    </section>
+  </div>
+
+  <section class="panel">
+  <div class="section-head">
+    <div><h2 id="chartTitle">6. Interactive Gantt Timeline</h2><div class="sub">Visualizing horizontal task spans across calendar months.</div></div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;margin:0">
+        <input type="checkbox" id="showBadgesToggle" checked> Show task badges (MM & max staff)
+      </label>
+      <div class="year-nav"><button class="secondary" id="prevYear">←</button><div class="year-label" id="yearLabel">2026</div><button class="secondary" id="nextYear">→</button></div>
+    </div>
+  </div>
+  <div class="section-head" style="margin-top:-3px">
+    <div class="sub">Current month tracking: <strong id="currentReadout">January 2026</strong></div>
+    <div style="display:flex;gap:8px">
+      <button class="primary" id="exportPptBtn" style="background:#16845b">Extract to PowerPoint (.bas)</button>
+      <button class="secondary" id="clearJobs">Clear all tasks</button>
+    </div>
+  </div>
+  
+  <div class="gantt-wrapper">
+      <div class="gantt-container" id="ganttChart"></div>
+    </div>
+
+    <div class="status" id="status">Add tasks to see them plotted on the Gantt chart.</div>
+  </section>
+</section>
+
+<section class="panel">
+  <div class="section-head">
+    <div><h2>7. Task register</h2><div class="sub">Detailed breakdown of task start/finish dates and proportional spans.</div></div>
+    <div style="display:flex;gap:8px">
+      <input type="file" id="importFile" accept=".csv" style="display:none">
+      <button class="secondary" id="importBtn">Import CSV</button>
+      <button class="secondary" id="exportCsv">Export CSV</button>
+    </div>
+  </div>
+  <div class="table-wrap"><table><thead><tr><th>Task</th><th class="num">Effort (MM)</th><th class="num">Max Persons</th><th class="num">Duration (Mo)</th><th>Start date</th><th>Finish date</th><th>Status</th><th>Blocker remark</th><th></th></tr></thead><tbody id="jobTable"></tbody></table></div>
+</section>
+</main>
+
+<!-- Instructions Modal -->
+<div class="modal-overlay" id="pptModal">
+  <div class="modal-box">
+    <h3>PowerPoint Export Instructions</h3>
+    <ol>
+      <li>Open PowerPoint > <strong>Alt + F11</strong> > <strong>Ctrl + M</strong></li>
+      <li>Locate and select the downloaded <strong>Gantt_Roadmap</strong> .bas file.</li>
+      <li>Once imported, you will see a new folder named <strong>Modules</strong> appear in the left sidebar, containing <strong>GanttExporter</strong>. You can now close the VBA window by clicking the X in the top right.</li>
+      <li>Press <strong>Alt + F8</strong> on your keyboard to open the Macro dialog box.</li>
+      <li>Select <strong>GenerateGanttTimeline</strong> and run.</li>
+    </ol>
+    <div style="text-align:right;margin-top:16px"><button class="primary" id="closeModal">Got it</button></div>
+  </div>
+</div>
+
+<footer>Planner runs locally in your browser.</footer>
+
+<script>
+(()=> {
+const $=id=>document.getElementById(id);
+const monthsNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const defaultPalette=['#5b63e8','#008f9c','#8b5cc7','#d46a3b','#3478c5','#b34d7c','#6c8f2e','#6875a8'];
+
+let teamSize=3, year=new Date().getFullYear(), currentMonth=new Date().getMonth()+1, jobs=[], nextId=1;
+let editingJobId = null;
+let editingTableId = null;
+
+let taskGroups = [
+  {id:1, name:'Group 1', color:'#5b63e8'},
+  {id:2, name:'Group 2', color:'#008f9c'},
+  {id:3, name:'Group 3', color:'#8b5cc7'},
+  {id:4, name:'Group 4', color:'#d46a3b'},
+];
+let nextGroupId = 5;
+
+$('startYearInput').value = year;
+
+const fmt=n=>Number.isInteger(n)?String(n):String(Number(n.toFixed(2)));
+const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const HEX_RE=/^#?[0-9a-fA-F]{6}$/;
+const normalizeHex=v=>{let s=String(v||'').trim();if(s&&s[0]!=='#')s='#'+s;return s.toLowerCase();};
+
+function groupColor(job){
+  const g = taskGroups.find(x => x.id === job.groupId) || taskGroups[0];
+  return g ? g.color : '#5b63e8';
+}
+function groupName(job){
+  const g = taskGroups.find(x => x.id === job.groupId) || taskGroups[0];
+  return g ? g.name : '';
+}
+function addTaskGroup(name, color){
+  const g = {id: nextGroupId, name, color: color || defaultPalette[nextGroupId % defaultPalette.length]};
+  nextGroupId++;
+  taskGroups.push(g);
+  return g;
+}
+
+function getCapacity(){ return teamSize * 12; }
+
+function computeProportionalSchedule() {
+  const schedulable = jobs.filter(j => j.customStartAbs !== undefined);
+  if(schedulable.length === 0) return [];
+
+  let tasks = schedulable.map((j, idx) => ({
+    ...j,
+    color: groupColor(j),
+    maxPeople: j.maxPeople !== undefined ? j.maxPeople : teamSize,
+    originalIndex: idx,
+    startAbs: j.customStartAbs,
+    currentEffortLeft: j.mm,
+    spans: []
+  }));
+
+  let currentSimMonth = Math.min(...tasks.map(t => t.startAbs));
+  let maxSteps = 4800;
+  let step = 0;
+
+  while(tasks.some(t => t.currentEffortLeft > 1e-4) && step < maxSteps) {
+    let activeTasks = tasks.filter(t => t.startAbs <= currentSimMonth && t.currentEffortLeft > 1e-4);
+
+    if(activeTasks.length === 0) {
+      let unstarted = tasks.filter(t => t.currentEffortLeft > 1e-4 && t.startAbs > currentSimMonth);
+      if(unstarted.length === 0) break;
+      currentSimMonth = Math.min(...unstarted.map(t => t.startAbs));
+      continue;
+    }
+
+    let dt = 0.25;
+    let baseCapacityPerTask = teamSize / activeTasks.length;
+    let monthlyAllocations = {};
+
+    activeTasks.forEach(t => {
+      let allowedCap = Math.min(baseCapacityPerTask, t.maxPeople);
+      monthlyAllocations[t.id] = allowedCap;
+    });
+
+    let totalAllocated = Object.values(monthlyAllocations).reduce((a, b) => a + b, 0);
+
+    if(totalAllocated > teamSize && totalAllocated > 0) {
+      let scale = teamSize / totalAllocated;
+      Object.keys(monthlyAllocations).forEach(id => {
+        monthlyAllocations[id] *= scale;
+      });
+    }
+
+    activeTasks.forEach(t => {
+      let capacityRate = monthlyAllocations[t.id] || 0;
+      let burned = Math.min(t.currentEffortLeft, capacityRate * dt);
+      t.currentEffortLeft -= burned;
+
+      let monthAbsIndex = Math.floor(currentSimMonth);
+      let existingSpan = t.spans.find(s => s.monthAbs === monthAbsIndex);
+      if(existingSpan) {
+        existingSpan.fraction += dt;
+      } else {
+        t.spans.push({ monthAbs: monthAbsIndex, fraction: dt });
+      }
+    });
+
+    currentSimMonth += dt;
+    step++;
+  }
+
+  tasks.forEach(t => {
+    if(t.spans.length > 0) {
+      let minMonth = Math.min(...t.spans.map(s => s.monthAbs));
+      let maxMonth = Math.max(...t.spans.map(s => s.monthAbs));
+      let totalFraction = t.spans.reduce((acc, s) => acc + s.fraction, 0);
+
+      t.startAbs = minMonth;
+      t.endAbs = maxMonth + totalFraction - Math.floor(totalFraction > 0 ? 0 : 1);
+      t.duration = totalFraction;
+      t.startAbsExact = minMonth + (t.spans[0] ? (1 - t.spans[0].fraction) : 0);
+      t.endAbsExact = t.startAbsExact + totalFraction;
+    } else {
+      t.startAbsExact = t.startAbs;
+      t.endAbsExact = t.startAbs + (t.mm / Math.min(teamSize, t.maxPeople));
+      t.duration = t.mm / Math.min(teamSize, t.maxPeople);
+    }
+
+    t.startYear = Math.floor(t.startAbsExact / 12);
+    t.startMonthIdx = Math.floor(t.startAbsExact % 12);
+    t.endYear = Math.floor(t.endAbsExact / 12);
+    t.endMonthIdx = Math.min(11, Math.floor((t.endAbsExact - 0.001) % 12));
+  });
+
+  tasks.sort((a, b) => a.originalIndex - b.originalIndex);
+  return tasks;
+}
+
+function setStatus(msg,type=''){$('status').className='status '+type;$('status').textContent=msg;}
+
+function render(){
+  const capacity = getCapacity();
+  $('teamSize').value = teamSize;
+  $('currentMonth').value = currentMonth;
+  $('kpiJobs').textContent = jobs.length;
+  $('kpiCapacity').textContent = fmt(capacity);
+  $('kpiCapacityDetail').textContent = `${teamSize} people × 12 months`;
+  $('yearLabel').textContent = year;
+  $('currentReadout').textContent = `${monthsNames[currentMonth-1]} ${year}`;
+  $('chartTitle').textContent = $('plannerTitle').value.trim()||'6. Interactive Gantt Timeline';
+
+  const scheduled = computeProportionalSchedule();
+
+  const currentAbsMonth = (year * 12) + (currentMonth - 1);
+  const endOfYearAbsMonth = (year * 12) + 12;
+  
+  let effortRemainingThisYear = 0;
+  scheduled.forEach(j => {
+    j.spans.forEach(span => {
+      if(span.monthAbs >= currentAbsMonth && span.monthAbs < endOfYearAbsMonth) {
+        effortRemainingThisYear += (span.fraction * teamSize);
+      }
+    });
+  });
+
+  const monthsRemainingInYear = 13 - currentMonth;
+  const totalCapacityFromNow = monthsRemainingInYear * teamSize;
+  const netRemaining = Math.max(0, totalCapacityFromNow - effortRemainingThisYear);
+  $('kpiRemaining').textContent = fmt(netRemaining);
+  $('kpiRemainingDetail').textContent = `${monthsRemainingInYear} months left in ${year}`;
+
+  if(scheduled.length > 0) {
+    const maxEnd = Math.max(...scheduled.map(j => j.endAbsExact));
+    const minStart = Math.min(...scheduled.map(j => j.startAbsExact));
+    const totalSpanMonths = maxEnd - minStart;
+    $('kpiSpan').textContent = `${fmt(totalSpanMonths)} months`;
+    $('kpiSpanDetail').textContent = `Total execution span`;
+  } else {
+    $('kpiSpan').textContent = `0 months`;
+    $('kpiSpanDetail').textContent = `No tasks queued`;
+  }
+
+  renderGroups();
+  renderList(scheduled);
+  renderBacklog();
+  renderGantt(scheduled);
+  renderTable(scheduled);
+}
+
+function editCardHTML(job, idx){
+  const isBacklogCur = job.customStartAbs === undefined;
+  const currentStartAbs = isBacklogCur ? (year * 12) : job.customStartAbs;
+  const curYear = Math.floor(currentStartAbs / 12);
+  const curMonth = currentStartAbs % 12;
+  const curGroupId = (job.groupId != null && taskGroups.some(g => g.id === job.groupId)) ? job.groupId : (taskGroups[0] ? taskGroups[0].id : null);
+  let groupOptions = '';
+  taskGroups.forEach(g => { groupOptions += `<option value="${g.id}" ${(g.id === curGroupId) ? 'selected' : ''}>${safe(g.name)}</option>`; });
+
+  let monthOptions = `<option value="" ${isBacklogCur ? 'selected' : ''}>Backlog (no start date)</option>`;
+  monthsNames.forEach((mName, mIdx) => {
+    monthOptions += `<option value="${mIdx}" ${(!isBacklogCur && mIdx === curMonth) ? 'selected' : ''}>${mName}</option>`;
+  });
+
+  return `
+    <div style="font-weight:750;margin-bottom:8px">Edit Task #${idx+1}</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px">
+      <div>
+        <label style="font-size:11px">Task name</label>
+        <input type="text" id="editName_${job.id}" value="${safe(job.name)}" style="padding:6px 9px">
+      </div>
+      <div>
+        <label style="font-size:11px">Task group</label>
+        <select id="editGroup_${job.id}" style="padding:6px 9px">${groupOptions}</select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <label style="font-size:11px">Effort (MM)</label>
+        <input type="number" id="editMm_${job.id}" min=".25" step=".25" value="${job.mm}" style="padding:6px 9px">
+      </div>
+      <div>
+        <label style="font-size:11px">Max Persons</label>
+        <input type="number" id="editMax_${job.id}" min="1" value="${job.maxPeople}" style="padding:6px 9px">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div>
+        <label style="font-size:11px">Start month</label>
+        <select id="editMonth_${job.id}" style="padding:6px 9px">${monthOptions}</select>
+      </div>
+      <div>
+        <label style="font-size:11px">Start year</label>
+        <input type="number" id="editYear_${job.id}" min="2000" max="2100" value="${curYear}" style="padding:6px 9px">
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px">Blocker remark</label>
+      <input type="text" id="editBlocker_${job.id}" maxlength="500" value="${safe(job.blocker||'')}" placeholder="e.g. Waiting on security approval" style="padding:6px 9px">
+    </div>
+    <div style="display:flex;gap:6px;justify-content:flex-end">
+      <button type="button" class="secondary" id="cancelEdit_${job.id}" style="padding:6px 10px;font-size:12px">Cancel</button>
+      <button type="button" class="primary" id="saveEdit_${job.id}" style="padding:6px 10px;font-size:12px">Save</button>
+    </div>
+  `;
+}
+
+function bindEditCard(job){
+  setTimeout(() => {
+    $(`cancelEdit_${job.id}`).addEventListener('click', () => {
+      editingJobId = null;
+      editingTableId = null;
+      render();
+    });
+    $(`saveEdit_${job.id}`).addEventListener('click', () => {
+      const newName = $(`editName_${job.id}`).value.trim();
+      const newGroupId = Number($(`editGroup_${job.id}`).value);
+      const newMm = Number($(`editMm_${job.id}`).value);
+      const newMax = Number($(`editMax_${job.id}`).value);
+      const newBlocker = $(`editBlocker_${job.id}`).value.trim();
+      const newMonthVal = $(`editMonth_${job.id}`).value;
+      const newYearNum = Number($(`editYear_${job.id}`).value);
+
+      if(!newName || !Number.isFinite(newMm) || newMm <= 0) {
+        setStatus('Please enter a valid name and positive effort.', 'error');
+        return;
+      }
+      if(!Number.isFinite(newMax) || newMax < 1) {
+        setStatus('Max persons must be at least 1.', 'error');
+        return;
+      }
+      if(newMonthVal !== '' && !Number.isFinite(newYearNum)) {
+        setStatus('Please enter a valid start year.', 'error');
+        return;
+      }
+
+      const targetJob = jobs.find(x => x.id === job.id);
+      if(targetJob) {
+        targetJob.name = newName;
+        targetJob.groupId = newGroupId;
+        targetJob.mm = newMm;
+        targetJob.maxPeople = newMax;
+        targetJob.blocker = newBlocker;
+        targetJob.customStartAbs = (newMonthVal === '') ? undefined : ((newYearNum * 12) + Number(newMonthVal));
+      }
+
+      editingJobId = null;
+      editingTableId = null;
+      render();
+      setStatus(`Updated task "${newName}".`, 'ok');
+    });
+  }, 0);
+}
+
+function moveJob(jobId, dir, backlogOnly=false){
+  const idx = jobs.findIndex(x => x.id === jobId);
+  if(idx < 0) return;
+  // Scheduled tasks reorder among scheduled tasks; backlog tasks among backlog tasks.
+  const sameBucket = x => backlogOnly ? (x.customStartAbs === undefined) : (x.customStartAbs !== undefined);
+  if(!sameBucket(jobs[idx])) return;
+  let target = -1;
+  if(dir < 0){
+    for(let k = idx - 1; k >= 0; k--){ if(sameBucket(jobs[k])){ target = k; break; } }
+  } else {
+    for(let k = idx + 1; k < jobs.length; k++){ if(sameBucket(jobs[k])){ target = k; break; } }
+  }
+  if(target < 0) return;
+  const temp = jobs[idx]; jobs[idx] = jobs[target]; jobs[target] = temp;
+  render();
+}
+
+function renderGroups(){
+  const select = $('jobGroup');
+  if(select){
+    const prevVal = select.value;
+    let opts = '';
+    taskGroups.forEach(g => { opts += `<option value="${g.id}">${safe(g.name)}</option>`; });
+    select.innerHTML = opts;
+    if(prevVal && taskGroups.some(g => String(g.id) === prevVal)) select.value = prevVal;
+  }
+
+  const list = $('groupList');
+  list.innerHTML = '';
+  taskGroups.forEach(g => {
+    const row = document.createElement('div');
+    row.className = 'group-row';
+    row.innerHTML = `
+      <input type="color" id="groupColor_${g.id}" value="${g.color}" style="width:42px;flex:0 0 auto;padding:1px">
+      <input type="text" id="groupColorHex_${g.id}" value="${g.color}" maxlength="7" spellcheck="false" style="width:82px;flex:0 0 auto">
+      <input type="text" id="groupName_${g.id}" value="${safe(g.name)}" style="flex:1" placeholder="Group name">
+      <button class="danger" data-action="del-group" title="Delete group" ${taskGroups.length<=1?'disabled':''}>×</button>
+    `;
+    const colorInput = row.querySelector(`#groupColor_${g.id}`);
+    const hexInput = row.querySelector(`#groupColorHex_${g.id}`);
+    const nameInput = row.querySelector(`#groupName_${g.id}`);
+
+    colorInput.addEventListener('input', () => { hexInput.value = colorInput.value; g.color = colorInput.value; });
+    colorInput.addEventListener('change', () => { render(); });
+    hexInput.addEventListener('input', () => {
+      const s = normalizeHex(hexInput.value);
+      if(HEX_RE.test(s)){ colorInput.value = s; hexInput.value = s; }
+    });
+    hexInput.addEventListener('blur', () => { hexInput.value = colorInput.value; });
+    hexInput.addEventListener('change', () => { const s = normalizeHex(hexInput.value); if(HEX_RE.test(s)){ g.color = s; render(); } });
+    nameInput.addEventListener('input', () => { g.name = nameInput.value; });
+    nameInput.addEventListener('change', () => { render(); });
+
+    row.querySelector('[data-action="del-group"]').addEventListener('click', () => {
+      if(taskGroups.length <= 1) return;
+      const removed = g;
+      taskGroups = taskGroups.filter(x => x.id !== g.id);
+      jobs.forEach(job => { if(job.groupId === removed.id) job.groupId = taskGroups[0].id; });
+      render();
+      setStatus(`Deleted group "${removed.name}". Tasks moved to "${taskGroups[0].name}".`, 'ok');
+    });
+
+    list.appendChild(row);
+  });
+}
+
+function renderList(scheduled){
+  const list=$('jobList'); list.innerHTML='';
+  if(!scheduled.length){list.innerHTML='<div class="empty">No scheduled tasks yet.<br>Add a task with a start month to schedule it on the timeline.</div>';}
+  else {
+    scheduled.forEach((j, idx)=>{
+      const el=document.createElement('div');
+      const taskColor = j.color;
+
+      if(editingJobId === j.id) {
+        el.className = 'job-card editing';
+        el.innerHTML = editCardHTML(j, idx);
+        bindEditCard(j);
+      } else {
+        el.className = 'job-card';
+        el.innerHTML=`
+          <div class="job-main">
+            <div class="job-name"><span class="color-dot" style="background:${taskColor}"></span>${idx+1}. ${safe(j.name)} <span style="font-size:10px;color:var(--accent);font-weight:700">(Pinned)</span></div>
+            <div class="job-meta">${fmt(j.mm)} MM (Max ${j.maxPeople} staff) · ${fmt(j.duration)} mo span · Starts ${monthsNames[j.startMonthIdx]} ${j.startYear}</div>
+          </div>
+          <span class="tag" style="background:${taskColor}1e;color:${taskColor}">${fmt(j.mm)} MM</span>
+          <div class="order-btns">
+            <button type="button" title="Move up priority" ${idx===0?'disabled':''} data-action="up">▲</button>
+            <button type="button" title="Move down priority" ${idx===scheduled.length-1?'disabled':''} data-action="down">▼</button>
+          </div>
+          <button class="secondary" type="button" title="Edit task" data-action="edit" style="padding:6px 9px;font-size:12px">✎</button>
+          <button class="danger" type="button" title="Delete task" data-action="del">×</button>
+        `;
+
+        el.querySelector('[data-action="up"]').addEventListener('click',()=>{ moveJob(j.id, -1); });
+        el.querySelector('[data-action="down"]').addEventListener('click',()=>{ moveJob(j.id, +1); });
+        el.querySelector('[data-action="edit"]').addEventListener('click',()=>{ editingJobId = j.id; editingTableId = null; render(); });
+        el.querySelector('[data-action="del"]').addEventListener('click',()=>{ jobs=jobs.filter(x=>x.id!==j.id); render(); setStatus('Task deleted.'); });
+      }
+
+      list.appendChild(el);
+    });
+  }
+  $('scheduledCount').textContent=`${scheduled.length} tasks`;
+}
+
+function renderBacklog(){
+  const backlog = jobs.filter(j => j.customStartAbs === undefined);
+  const list=$('backlogList'); list.innerHTML='';
+  if(!backlog.length){list.innerHTML='<div class="empty">Backlog is empty.<br>Leave the start month blank when adding a task to park it here.</div>';}
+  else {
+    backlog.forEach((job, idx)=>{
+      const el=document.createElement('div');
+      const taskColor = groupColor(job);
+
+      if(editingJobId === job.id) {
+        el.className = 'job-card editing';
+        el.innerHTML = editCardHTML(job, idx);
+        bindEditCard(job);
+      } else {
+        el.className = 'job-card';
+        el.innerHTML=`
+          <div class="job-main">
+            <div class="job-name"><span class="color-dot" style="background:${taskColor}"></span>${idx+1}. ${safe(job.name)} <span class="state pending">Pending</span></div>
+            <div class="job-meta">${fmt(job.mm)} MM (Max ${job.maxPeople} staff) · Pending — assign a start month to schedule</div>
+          </div>
+          <span class="tag" style="background:${taskColor}1e;color:${taskColor}">${fmt(job.mm)} MM</span>
+          <div class="order-btns">
+            <button type="button" title="Move up priority" ${idx===0?'disabled':''} data-action="up">▲</button>
+            <button type="button" title="Move down priority" ${idx===backlog.length-1?'disabled':''} data-action="down">▼</button>
+          </div>
+          <button class="secondary" type="button" title="Assign start month / edit" data-action="edit" style="padding:6px 9px;font-size:12px">✎</button>
+          <button class="danger" type="button" title="Delete task" data-action="del">×</button>
+        `;
+        el.querySelector('[data-action="up"]').addEventListener('click',()=>{ moveJob(job.id, -1, true); });
+        el.querySelector('[data-action="down"]').addEventListener('click',()=>{ moveJob(job.id, +1, true); });
+        el.querySelector('[data-action="edit"]').addEventListener('click',()=>{ editingJobId = job.id; editingTableId = null; render(); });
+        el.querySelector('[data-action="del"]').addEventListener('click',()=>{ jobs=jobs.filter(x=>x.id!==job.id); render(); setStatus('Task deleted.'); });
+      }
+
+      list.appendChild(el);
+    });
+  }
+  $('backlogCount').textContent=`${backlog.length} tasks`;
+}
+
+function assignLanes(tasks){
+  // Build a priority order from the task groups list (first group = top lanes).
+  const groupOrder = {};
+  taskGroups.forEach((g, gi) => { groupOrder[g.id] = gi; });
+  const groupOf = t => (groupOrder[t.groupId] !== undefined ? groupOrder[t.groupId] : 1e9);
+
+  // Bucket tasks by group so bars of the same group render as a contiguous block.
+  const byGroup = {};
+  tasks.forEach(t => {
+    const key = groupOf(t);
+    (byGroup[key] = byGroup[key] || []).push(t);
+  });
+
+  const groupKeys = Object.keys(byGroup).map(Number).sort((a, b) => a - b);
+
+  const lanes = [];
+  groupKeys.forEach(key => {
+    const groupTasks = byGroup[key].slice().sort((a, b) =>
+      (a.startAbsExact - b.startAbsExact) || (a.endAbsExact - b.endAbsExact) || (a.originalIndex - b.originalIndex)
+    );
+    const laneOffset = lanes.length;
+    groupTasks.forEach(t => {
+      let placed = false;
+      for(let i = laneOffset; i < lanes.length; i++){
+        if(t.startAbsExact >= lanes[i].lastEnd - 1e-6){
+          lanes[i].tasks.push(t);
+          lanes[i].lastEnd = t.endAbsExact;
+          placed = true;
+          break;
+        }
+      }
+      if(!placed){
+        lanes.push({ tasks: [t], lastEnd: t.endAbsExact });
+      }
+    });
+  });
+
+  return lanes.map(l => l.tasks);
+}
+
+function updateGanttTail(entry, container){
+  const cRect = container.getBoundingClientRect();
+  const bRect = entry.barWrap.getBoundingClientRect();
+  const lRect = entry.label.getBoundingClientRect();
+
+  const bL = bRect.left - cRect.left, bT = bRect.top - cRect.top;
+  const bW = bRect.width, bH = bRect.height;
+  const lL = lRect.left - cRect.left, lT = lRect.top - cRect.top;
+  const lW = lRect.width, lH = lRect.height;
+
+  const bCx = bL + bW/2, bCy = bT + bH/2;
+  const lCx = lL + lW/2, lCy = lT + lH/2;
+
+  if(lCx >= bCx){
+    entry.tailLine.setAttribute('x1', bL + bW); entry.tailLine.setAttribute('y1', bCy);
+    entry.tailLine.setAttribute('x2', lL);        entry.tailLine.setAttribute('y2', lCy);
+  } else {
+    entry.tailLine.setAttribute('x1', bL);        entry.tailLine.setAttribute('y1', bCy);
+    entry.tailLine.setAttribute('x2', lL + lW);   entry.tailLine.setAttribute('y2', lCy);
+  }
+}
+
+function positionGanttLabel(entry, container){
+  const job = entry.job, barWrap = entry.barWrap, label = entry.label;
+  const cRect = container.getBoundingClientRect();
+  const cW = cRect.width, cH = cRect.height;
+
+  if(job.labelX === undefined || job.labelY === undefined){
+    const bRect = barWrap.getBoundingClientRect();
+    const lW = label.offsetWidth, lH = label.offsetHeight;
+    const barLeft = bRect.left - cRect.left;
+    const barRight = barLeft + bRect.width;
+    const barTop = bRect.top - cRect.top;
+    const barH = bRect.height;
+
+    let leftPx;
+    if(barRight > cW * 0.6){
+      leftPx = barLeft - lW - 8;
+    } else {
+      leftPx = barRight + 8;
+    }
+    leftPx = Math.max(2, Math.min(leftPx, cW - lW - 2));
+    const topPx = Math.max(2, Math.min(barTop + (barH - lH)/2, cH - lH - 2));
+
+    job.labelX = (leftPx / cW) * 100;
+    job.labelY = (topPx / cH) * 100;
+  }
+
+  label.style.left = job.labelX + '%';
+  label.style.top = job.labelY + '%';
+  updateGanttTail(entry, container);
+}
+
+function makeGanttLabelDraggable(entry, container){
+  const job = entry.job, label = entry.label;
+  label.addEventListener('mousedown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX, startY = e.clientY;
+    const cRect = container.getBoundingClientRect();
+    const cW = cRect.width, cH = cRect.height;
+    const lRect = label.getBoundingClientRect();
+    const origLeft = lRect.left - cRect.left;
+    const origTop = lRect.top - cRect.top;
+    const lW = lRect.width, lH = lRect.height;
+
+    function onMove(ev){
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      const newLeft = Math.max(0, Math.min(origLeft + dx, cW - lW));
+      const newTop = Math.max(0, Math.min(origTop + dy, cH - lH));
+      job.labelX = (newLeft / cW) * 100;
+      job.labelY = (newTop / cH) * 100;
+      label.style.left = job.labelX + '%';
+      label.style.top = job.labelY + '%';
+      updateGanttTail(entry, container);
+    }
+    function onUp(){
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+function bindGanttBarDrag(container){
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    if(e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  });
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    const taskId = Number(e.dataTransfer.getData('text/plain'));
+    if(!taskId) return;
+    const rect = container.getBoundingClientRect();
+    const relX = e.clientX - rect.left;
+    let monthIdx = Math.floor((relX / rect.width) * 12);
+    monthIdx = Math.max(0, Math.min(11, monthIdx));
+    const job = jobs.find(x => x.id === taskId);
+    if(job){
+      job.customStartAbs = (year * 12) + monthIdx;
+      render();
+      setStatus(`Moved "${job.name}" to start in ${monthsNames[monthIdx]} ${year}.`, 'ok');
+    }
+  });
+}
+
+function renderGantt(scheduled){
+  const container = $('ganttChart');
+  container.innerHTML = '';
+
+  for(let m=1; m<=12; m++){
+    const monthHead = document.createElement('div');
+    monthHead.className = `gantt-header-month ${m===currentMonth ? 'current' : ''}`;
+    monthHead.innerHTML = `${monthsNames[m-1].substring(0,3)}<small>M${m}</small>`;
+    container.appendChild(monthHead);
+  }
+
+  const yearStartAbs = year * 12;
+  const yearEndAbs = (year * 12) + 12;
+
+  const visibleScheduled = scheduled.filter(j => {
+    const hasSpanInYear = j.spans.some(span => span.monthAbs >= yearStartAbs && span.monthAbs < yearEndAbs);
+    const startsBeforeOrInYear = j.startAbsExact < yearEndAbs;
+    const endsAfterOrInYear = j.endAbsExact > yearStartAbs;
+    return hasSpanInYear || (startsBeforeOrInYear && endsAfterOrInYear);
+  });
+
+  if(visibleScheduled.length === 0){
+    const emptyTrack = document.createElement('div');
+    emptyTrack.className = 'gantt-row-track';
+    for(let m=1; m<=12; m++){
+      const col = document.createElement('div');
+      col.className = `gantt-grid-col ${m===currentMonth ? 'current' : ''}`;
+      emptyTrack.appendChild(col);
+    }
+    container.appendChild(emptyTrack);
+
+    for(let m=0; m<12; m++){
+      const utilCol = document.createElement('div');
+      utilCol.className = 'gantt-util-col';
+      utilCol.textContent = `0 / ${teamSize} MM`;
+      container.appendChild(utilCol);
+    }
+    return;
+  }
+
+  const monthUtilizations = Array(12).fill(0);
+  visibleScheduled.forEach(j => {
+    j.spans.forEach(span => {
+      if(span.monthAbs >= yearStartAbs && span.monthAbs < yearEndAbs){
+        monthUtilizations[span.monthAbs - yearStartAbs] += (span.fraction * j.maxPeople);
+      }
+    });
+  });
+
+  const showBadges = $('showBadgesToggle').checked;
+  const lanes = assignLanes(visibleScheduled);
+
+  const labelLayer = document.createElement('div');
+  labelLayer.className = 'gantt-label-layer';
+  const tailSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  tailSvg.setAttribute('class','gantt-tail');
+  labelLayer.appendChild(tailSvg);
+
+  const labelEntries = [];
+
+  lanes.forEach(lane => {
+    const trackCol = document.createElement('div');
+    trackCol.className = 'gantt-row-track';
+
+    for(let m=1; m<=12; m++){
+      const col = document.createElement('div');
+      col.className = `gantt-grid-col ${m===currentMonth ? 'current' : ''}`;
+      trackCol.appendChild(col);
+    }
+
+    lane.forEach(j => {
+      const relativeStart = j.startAbsExact - yearStartAbs;
+      const relativeEnd = j.endAbsExact - yearStartAbs;
+      if(relativeEnd <= 0 || relativeStart >= 12) return;
+
+      const leftPercent = Math.max(0, (relativeStart / 12) * 100);
+      const rightPercent = Math.min(100, (relativeEnd / 12) * 100);
+      const widthPercent = rightPercent - leftPercent;
+
+      const barWrap = document.createElement('div');
+      barWrap.className = 'gantt-bar-wrapper';
+      barWrap.style.left = `${leftPercent}%`;
+      barWrap.style.width = `${widthPercent}%`;
+      barWrap.draggable = true;
+
+      barWrap.addEventListener('dragstart', e => {
+        barWrap.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', String(j.id));
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      barWrap.addEventListener('dragend', () => {
+        barWrap.classList.remove('dragging');
+      });
+
+      const bar = document.createElement('div');
+      bar.className = 'gantt-bar';
+      bar.style.background = j.color;
+      if(showBadges){
+        bar.innerHTML = `<span class="gantt-bar-badge">${fmt(j.mm)} MM (Max ${j.maxPeople})</span>`;
+      }
+      bar.title = `Drag to change start month\n${j.name}\nEffort: ${fmt(j.mm)} MM\nMax Staff: ${j.maxPeople}\nSpan: ${fmt(j.duration)} Months\nStart: ${monthsNames[j.startMonthIdx]} ${j.startYear}\nFinish: ${monthsNames[j.endMonthIdx]} ${j.endYear}`;
+      barWrap.appendChild(bar);
+      trackCol.appendChild(barWrap);
+
+      const label = document.createElement('div');
+      label.className = 'gantt-bar-title';
+      label.textContent = j.name;
+      label.style.background = j.color;
+      label.title = `${j.name} — drag to reposition`;
+      labelLayer.appendChild(label);
+
+      const tailLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+      tailSvg.appendChild(tailLine);
+
+      labelEntries.push({ job: j, barWrap, label, tailLine });
+    });
+
+    container.appendChild(trackCol);
+  });
+
+  for(let m=0; m<12; m++){
+    const utilCol = document.createElement('div');
+    utilCol.className = 'gantt-util-col';
+    const used = monthUtilizations[m];
+    utilCol.textContent = `${fmt(used)} / ${teamSize} MM`;
+    if(used > teamSize){
+      utilCol.style.color = 'var(--red)';
+      utilCol.style.fontWeight = '800';
+    } else if(used >= teamSize){
+      utilCol.style.color = '#5b63e8';
+      utilCol.style.fontWeight = '800';
+    }
+    container.appendChild(utilCol);
+  }
+
+  container.appendChild(labelLayer);
+
+  labelEntries.forEach(entry => {
+    positionGanttLabel(entry, container);
+    makeGanttLabelDraggable(entry, container);
+  });
+}
+
+$('showBadgesToggle').addEventListener('change', () => {
+  render();
+});
+
+function renderTable(scheduled){
+  const body=$('jobTable'); body.innerHTML='';
+  if(!jobs.length){body.innerHTML='<tr><td colspan="9" style="text-align:center;color:#8a93a6;padding:22px">No tasks added yet.</td></tr>';return;}
+
+  const schedById = {};
+  scheduled.forEach(s => { schedById[s.id] = s; });
+  const backlogJobs = jobs.filter(x => x.customStartAbs === undefined);
+
+  jobs.forEach((job, idx)=>{
+    const j = schedById[job.id];
+    const isBacklog = !j;
+    const tr=document.createElement('tr');
+    const taskColor = groupColor(job);
+
+    if(editingTableId === job.id){
+      tr.innerHTML=`<td colspan="9" style="background:#f8f9fc;padding:14px">${editCardHTML(job, idx)}</td>`;
+      bindEditCard(job);
+      body.appendChild(tr);
+      return;
+    }
+
+    let nameCell, durCell, startCell, endCell, statusCell;
+    if(isBacklog){
+      nameCell = `<span class="color-dot" style="background:${taskColor}"></span><strong>${safe(job.name)}</strong>`;
+      durCell = '—';
+      startCell = '—';
+      endCell = '—';
+      statusCell = '<span class="state pending">Pending</span>';
+    } else {
+      const startName = `${monthsNames[j.startMonthIdx]} ${j.startYear}`;
+      const endName = `${monthsNames[j.endMonthIdx]} ${j.endYear}`;
+      nameCell = `<span class="color-dot" style="background:${taskColor}"></span><strong>${safe(job.name)}</strong> <span class="state" style="background:#eef0ff;color:var(--accent)">Pinned</span>`;
+      durCell = fmt(j.duration);
+      startCell = startName;
+      endCell = endName;
+      statusCell = '<span class="state">Active</span>';
+    }
+
+    const schedPos = scheduled.findIndex(s => s.id === job.id);
+    const backlogPos = isBacklog ? backlogJobs.findIndex(x => x.id === job.id) : -1;
+    const canUp = isBacklog ? backlogPos > 0 : schedPos > 0;
+    const canDown = isBacklog ? backlogPos < backlogJobs.length - 1 : schedPos < scheduled.length - 1;
+    const blockerCell = job.blocker ? safe(job.blocker) : '<span style="color:#8a93a6">—</span>';
+
+    tr.innerHTML=`
+      <td>${nameCell}</td>
+      <td class="num">${fmt(job.mm)}</td>
+      <td class="num">${job.maxPeople}</td>
+      <td class="num">${durCell}</td>
+      <td>${startCell}</td>
+      <td>${endCell}</td>
+      <td>${statusCell}</td>
+      <td style="max-width:260px;white-space:normal">${blockerCell}</td>
+      <td style="white-space:nowrap"><button class="secondary" data-action="up" title="Move up priority" style="padding:5px 8px;font-size:12px;margin-right:4px" ${canUp?'':'disabled'}>▲</button><button class="secondary" data-action="down" title="Move down priority" style="padding:5px 8px;font-size:12px;margin-right:6px" ${canDown?'':'disabled'}>▼</button><button class="secondary" data-action="edit" style="padding:5px 8px;font-size:12px;margin-right:6px">Edit</button><button class="danger" data-action="del">Delete</button></td>
+    `;
+    tr.querySelector('[data-action="up"]').addEventListener('click',()=>{ moveJob(job.id, -1, isBacklog); });
+    tr.querySelector('[data-action="down"]').addEventListener('click',()=>{ moveJob(job.id, +1, isBacklog); });
+    tr.querySelector('[data-action="edit"]').addEventListener('click',()=>{ editingTableId = job.id; editingJobId = null; render(); });
+    tr.querySelector('[data-action="del"]').addEventListener('click',()=>{
+      jobs=jobs.filter(x=>x.id!==job.id);
+      render();
+      setStatus('Task deleted.');
+    });
+    body.appendChild(tr);
+  });
+}
+
+$('jobForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const name=$('jobName').value.trim();
+  const groupId = Number($('jobGroup').value);
+  const mm=Number($('jobMM').value);
+  const maxPeople=Number($('maxPeople').value);
+  const blocker=$('jobBlocker').value.trim();
+  const startMonthVal = $('startMonthSelect').value;
+  const startYearNum = Number($('startYearInput').value);
+
+  if(!name||!Number.isFinite(mm)||mm<=0){setStatus('Please provide a valid task name and positive effort.','error');return;}
+  if(!Number.isFinite(maxPeople)||maxPeople<1){setStatus('Max persons must be at least 1.','error');return;}
+
+  const customStartAbs = (startMonthVal === '') ? undefined : ((startYearNum * 12) + Number(startMonthVal));
+  jobs.push({id:nextId++, name, groupId, mm, maxPeople, customStartAbs, blocker});
+  $('jobName').value='';
+  $('jobMM').value='6';
+  $('maxPeople').value=1;
+  $('jobBlocker').value='';
+  render();
+  setStatus(customStartAbs === undefined ? `Added "${name}" to backlog.` : `Added task "${name}".`, 'ok');
+});
+
+$('applySettings').addEventListener('click', ()=>{
+  const newTeam=Number($('teamSize').value);
+  const newMonth=Number($('currentMonth').value);
+  if(!Number.isFinite(newTeam)||newTeam<1||!Number.isFinite(newMonth)||newMonth<1||newMonth>12){
+    setStatus('Please enter valid team size and current month (1–12).','error');
+    return;
+  }
+  teamSize=newTeam;
+  currentMonth=newMonth;
+  render();
+  setStatus('Plan settings updated successfully.','ok');
+});
+
+$('prevYear').addEventListener('click', ()=>{ year--; render(); });
+$('nextYear').addEventListener('click', ()=>{ year++; render(); });
+$('clearJobs').addEventListener('click', ()=>{ if(confirm('Clear all tasks?')){ jobs=[]; render(); setStatus('All tasks cleared.'); } });
+$('addGroupBtn').addEventListener('click', ()=>{ addTaskGroup('New group'); render(); setStatus('Task group added.','ok'); });
+
+bindGanttBarDrag($('ganttChart'));
+
+// CSV Import/Export
+$('exportCsv').addEventListener('click', ()=>{
+  if(!jobs.length){setStatus('No tasks to export.','warn');return;}
+  let csv='Name,MM,MaxPersons,StartMonth,StartYear,Group,GroupColor,Blocker\n';
+  jobs.forEach(j=>{
+    let sM, sY;
+    if(j.customStartAbs === undefined){
+      sM = -1; sY = -1; // -1 = backlog (no start date)
+    } else {
+      sY = Math.floor(j.customStartAbs / 12);
+      sM = j.customStartAbs % 12;
+    }
+    csv+=`"${j.name.replace(/"/g,'""')}",${j.mm},${j.maxPeople},${sM},${sY},"${groupName(j).replace(/"/g,'""')}","${groupColor(j)}","${(j.blocker||'').replace(/"/g,'""')}"\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='roadmap_tasks.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus('Roadmap exported to CSV.','ok');
+});
+
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change', e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    try{
+      // Replace existing/default group definitions with the ones in this CSV.
+      taskGroups = [];
+      nextGroupId = 1;
+      const lines=evt.target.result.split(/\r?\n/);
+      let count=0;
+      for(let i=1; i<lines.length; i++){
+        const line=lines[i].trim();
+        if(!line)continue;
+        const parts=line.match(/(".*?"|[^",\s]+)(?=\s*,\s*|\s*$)/g);
+        if(parts && parts.length>=5){
+          const name=parts[0].replace(/^"|"$/g,'').replace(/""/g,'"');
+          const mm=Number(parts[1]);
+          const maxPeople=Number(parts[2]);
+          const sM=Number(parts[3]);
+          const sY=Number(parts[4]);
+          const groupRaw = parts[5] ? parts[5].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
+          const groupColorRaw = parts[6] ? parts[6].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
+          const blockerRaw = parts[7] ? parts[7].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
+          const gcolor = (groupColorRaw && HEX_RE.test(groupColorRaw)) ? normalizeHex(groupColorRaw) : null;
+          if(name && Number.isFinite(mm) && Number.isFinite(maxPeople)){
+            const isBacklog = (sM < 0 || !Number.isFinite(sM));
+            let gid = (taskGroups[0] && taskGroups[0].id) || null;
+            if(groupRaw){
+              let g = taskGroups.find(x => x.name.toLowerCase() === groupRaw.toLowerCase());
+              if(!g){
+                g = addTaskGroup(groupRaw, gcolor || undefined);
+              } else if(gcolor){
+                g.color = gcolor;
+              }
+              gid = g.id;
+            }
+            jobs.push({id:nextId++, name, mm, maxPeople, groupId: gid, customStartAbs: isBacklog ? undefined : (sY*12)+sM, blocker: blockerRaw});
+            count++;
+          }
+        }
+      }
+      // Only fall back to a default group when the CSV defines none.
+      if(taskGroups.length === 0){
+        addTaskGroup('Group 1', defaultPalette[0]);
+      }
+      // Re-point tasks left over from a previous roadmap at a valid group.
+      jobs.forEach(job => {
+        if(!taskGroups.some(g => g.id === job.groupId)) job.groupId = taskGroups[0].id;
+      });
+      render();
+      setStatus(`Successfully imported ${count} tasks from CSV.`,'ok');
+    }catch(err){
+      setStatus('Failed to parse CSV file.','error');
+    }
+    $('importFile').value='';
+  };
+  reader.readAsText(file);
+});
+
+// PowerPoint Export (.bas module generation) with colors & bottom MM capacity row
+$('exportPptBtn').addEventListener('click', () => {
+  const scheduled = computeProportionalSchedule();
+  if(scheduled.length === 0){
+    setStatus('No scheduled tasks to export (backlog tasks need a start month).', 'warn');
+    return;
+  }
+
+  const planTitle = $('plannerTitle').value.trim() || 'Annual Man-Month Roadmap Planner';
+  const yearStartAbs = year * 12;
+  const yearEndAbs = (year * 12) + 12;
+
+  // Calculate monthly utilization for bottom row
+  let monthUtilizations = Array(12).fill(0);
+  scheduled.forEach(j => {
+    j.spans.forEach(span => {
+      if(span.monthAbs >= yearStartAbs && span.monthAbs < yearEndAbs){
+        let mIdx = span.monthAbs - yearStartAbs;
+        monthUtilizations[mIdx] += (span.fraction * j.maxPeople);
+      }
+    });
+  });
+
+  const visibleForPpt = scheduled.filter(j => (j.endAbsExact - yearStartAbs) > 0 && (j.startAbsExact - yearStartAbs) < 12);
+  const pptLanes = assignLanes(visibleForPpt);
+  if(pptLanes.length === 0){
+    setStatus('No tasks fall within the selected year to export.', 'warn');
+    return;
+  }
+  const laneIndexOf = {};
+  pptLanes.forEach((lane, li) => lane.forEach(t => { laneIndexOf[t.id] = li; }));
+
+  let vbaCode = `Attribute VB_Name = "GanttExporter"
+Sub GenerateGanttTimeline()
+    Dim pptSlide As Slide
+    Set pptSlide = ActivePresentation.Slides.Add(ActivePresentation.Slides.Count + 1, ppLayoutBlank)
+
+    ' Slide dimensions (points)
+    Dim slideW As Single, slideH As Single
+    slideW = ActivePresentation.PageSetup.SlideWidth
+    slideH = ActivePresentation.PageSetup.SlideHeight
+
+    ' Margins
+    Dim marginL As Single, marginR As Single, marginTop As Single, marginBottom As Single
+    marginL = 40
+    marginR = 40
+    marginTop = 24
+    marginBottom = 26
+
+    ' Title (full page width)
+    Dim titleH As Single
+    titleH = 42
+    Dim titleBox As Shape
+    Set titleBox = pptSlide.Shapes.AddTextbox(msoTextOrientationHorizontal, marginL, marginTop, slideW - marginL - marginR, titleH)
+    titleBox.TextFrame.TextRange.Text = "${planTitle.replace(/"/g, '""')} (${year})"
+    titleBox.TextFrame.TextRange.Font.Size = 22
+    titleBox.TextFrame.TextRange.Font.Bold = msoTrue
+    titleBox.TextFrame.TextRange.Font.Name = "Arial"
+
+    ' Chart area fills the space below the title
+    Dim chartTop As Single, chartHeight As Single
+    chartTop = marginTop + titleH + 16
+    chartHeight = slideH - chartTop - marginBottom
+
+    ' Horizontal grid (full page width)
+    Dim startLeft As Single, totalWidth As Single, colWidth As Single
+    startLeft = marginL
+    totalWidth = slideW - marginL - marginR
+    colWidth = totalWidth / 12
+
+    ' Vertical layout: header row + packed lanes + bottom utilization row
+    Dim lanesCount As Single
+    lanesCount = ${pptLanes.length}
+    Dim hdrH As Single, gapHdr As Single, utilGap As Single, utilH As Single
+    hdrH = 20
+    gapHdr = 12
+    utilGap = 14
+    utilH = 22
+    Dim laneH As Single
+    laneH = (chartHeight - hdrH - gapHdr - utilGap - utilH) / lanesCount
+    If laneH < 14 Then laneH = 14
+    Dim firstLaneTop As Single, utilTop As Single
+    firstLaneTop = chartTop + hdrH + gapHdr
+    utilTop = firstLaneTop + (lanesCount * laneH) + utilGap
+
+    ' Bar height scales with the lane height
+    Dim barH As Single
+    barH = laneH * 0.6
+    If barH > 30 Then barH = 30
+    If barH < 8 Then barH = 8
+
+    Dim m As Integer
+    Dim monthsNameArr(1 To 12) As String
+    monthsNameArr(1) = "Jan": monthsNameArr(2) = "Feb": monthsNameArr(3) = "Mar"
+    monthsNameArr(4) = "Apr": monthsNameArr(5) = "May": monthsNameArr(6) = "Jun"
+    monthsNameArr(7) = "Jul": monthsNameArr(8) = "Aug": monthsNameArr(9) = "Sep"
+    monthsNameArr(10) = "Oct": monthsNameArr(11) = "Nov": monthsNameArr(12) = "Dec"
+
+    ' Draw Header Row
+    For m = 1 To 12
+        Dim hdr As Shape
+        Set hdr = pptSlide.Shapes.AddTextbox(msoTextOrientationHorizontal, startLeft + ((m - 1) * colWidth), chartTop, colWidth, hdrH)
+        hdr.TextFrame.TextRange.Text = monthsNameArr(m)
+        hdr.TextFrame.TextRange.Font.Size = 11
+        hdr.TextFrame.TextRange.Font.Bold = msoTrue
+        hdr.TextFrame.TextRange.Font.Color.RGB = RGB(80, 90, 110)
+        hdr.TextFrame.TextRange.ParagraphFormat.Alignment = ppAlignCenter
+    Next m
+
+    ' Vertical quarter separator lines
+    Dim q As Integer
+    Dim qLine As Shape
+    For q = 1 To 3
+        Set qLine = pptSlide.Shapes.AddLine(startLeft + (q * 3 * colWidth), chartTop, startLeft + (q * 3 * colWidth), utilTop + utilH)
+        qLine.Line.ForeColor.RGB = RGB(205, 210, 222)
+        qLine.Line.Weight = 1.5
+    Next q
+`;
+
+  scheduled.forEach((j, idx) => {
+    const relStart = j.startAbsExact - yearStartAbs;
+    const relEnd = j.endAbsExact - yearStartAbs;
+
+    if(relEnd > 0 && relStart < 12){
+      vbaCode += `
+    ' Task #${idx + 1}: ${safeVbaString(j.name)}
+    Dim leftPct_${idx} As Double, widthPct_${idx} As Double
+    leftPct_${idx} = ${relStart} / 12
+    widthPct_${idx} = (${relEnd} - ${relStart}) / 12
+    If leftPct_${idx} < 0 Then leftPct_${idx} = 0
+    If leftPct_${idx} + widthPct_${idx} > 1 Then widthPct_${idx} = 1 - leftPct_${idx}
+    
+    Dim barLeft_${idx} As Single, barWidth_${idx} As Single, barTop_${idx} As Single, laneCenterY_${idx} As Single
+    barLeft_${idx} = startLeft + (leftPct_${idx} * totalWidth)
+    barWidth_${idx} = widthPct_${idx} * totalWidth
+    laneCenterY_${idx} = firstLaneTop + (${laneIndexOf[j.id]} * laneH) + (laneH / 2)
+    barTop_${idx} = laneCenterY_${idx} - (barH / 2)
+    
+    If barWidth_${idx} < 10 Then barWidth_${idx} = 10
+
+    ' Create task name textbox and auto-size it to fit its text
+    Dim nameBox_${idx} As Shape
+    Set nameBox_${idx} = pptSlide.Shapes.AddTextbox(msoTextOrientationHorizontal, 0, 0, 10, 10)
+    nameBox_${idx}.TextFrame.TextRange.Text = "${safeVbaString(j.name)} (${fmt(j.mm)} MM)"
+    nameBox_${idx}.TextFrame.TextRange.Font.Size = 10
+    nameBox_${idx}.TextFrame.TextRange.Font.Bold = msoTrue
+    nameBox_${idx}.TextFrame.TextRange.Font.Color.RGB = RGB(${hexToRgb(j.color)})
+    nameBox_${idx}.TextFrame.WordWrap = msoFalse
+    nameBox_${idx}.TextFrame.MarginLeft = 0
+    nameBox_${idx}.TextFrame.MarginRight = 0
+    nameBox_${idx}.TextFrame.MarginTop = 0
+    nameBox_${idx}.TextFrame.MarginBottom = 0
+    nameBox_${idx}.TextFrame.AutoSize = ppAutoSizeShapeToFitText
+    nameBox_${idx}.TextFrame.AutoSize = ppAutoSizeNone
+
+    Dim nameW_${idx} As Single, nameH_${idx} As Single
+    nameW_${idx} = nameBox_${idx}.Width
+    nameH_${idx} = nameBox_${idx}.Height
+
+    ' Position the name to the right of the bar, or left when near the edge
+    Dim nameLeft_${idx} As Single
+    Dim nameOnRight_${idx} As Boolean
+    nameOnRight_${idx} = True
+    nameLeft_${idx} = barLeft_${idx} + barWidth_${idx} + 8
+    If nameLeft_${idx} + nameW_${idx} > startLeft + totalWidth Then
+        nameOnRight_${idx} = False
+        nameLeft_${idx} = barLeft_${idx} - nameW_${idx} - 8
+        If nameLeft_${idx} < startLeft Then nameLeft_${idx} = startLeft
+    End If
+    nameBox_${idx}.Left = nameLeft_${idx}
+    nameBox_${idx}.Top = laneCenterY_${idx} - (nameH_${idx} / 2)
+
+    ' Draw Task Bar Shape with Task Color
+    Dim taskBar_${idx} As Shape
+    Set taskBar_${idx} = pptSlide.Shapes.AddShape(msoShapeRoundedRectangle, barLeft_${idx}, barTop_${idx}, barWidth_${idx}, barH)
+    taskBar_${idx}.Fill.ForeColor.RGB = RGB(${hexToRgb(j.color)})
+    taskBar_${idx}.Line.ForeColor.RGB = RGB(255, 255, 255)
+    taskBar_${idx}.Line.Weight = 1.5
+
+    ' Draw snapped leader line (tail) connecting the bar and the name
+    Dim tailLine_${idx} As Shape
+    Dim tailX1_${idx} As Single, tailX2_${idx} As Single
+    If nameOnRight_${idx} Then
+        tailX1_${idx} = barLeft_${idx} + barWidth_${idx}
+        tailX2_${idx} = nameLeft_${idx}
+    Else
+        tailX1_${idx} = barLeft_${idx}
+        tailX2_${idx} = nameLeft_${idx} + nameW_${idx}
+    End If
+    Set tailLine_${idx} = pptSlide.Shapes.AddConnector(msoConnectorStraight, tailX1_${idx}, laneCenterY_${idx}, tailX2_${idx}, laneCenterY_${idx})
+    tailLine_${idx}.Line.ForeColor.RGB = RGB(139, 144, 153)
+    tailLine_${idx}.Line.Weight = 1
+    tailLine_${idx}.Line.DashStyle = msoLineDash
+    SnapConnector tailLine_${idx}, taskBar_${idx}, nameBox_${idx}, tailX1_${idx}, laneCenterY_${idx}, tailX2_${idx}, laneCenterY_${idx}
+`;
+    }
+  });
+
+  vbaCode += `
+    ' Bottom Row: Monthly Capacity / Utilization Summary Row
+    ' Separator Line for Bottom Row
+    Dim sepLine As Shape
+    Set sepLine = pptSlide.Shapes.AddLine(startLeft, utilTop - 7, startLeft + totalWidth, utilTop - 7)
+    sepLine.Line.ForeColor.RGB = RGB(200, 205, 225)
+    sepLine.Line.Weight = 2
+`;
+
+  monthUtilizations.forEach((used, mIdx) => {
+    const isOver = used > teamSize;
+    const isFull = used >= teamSize;
+    let r = 91, g = 99, b = 232; // Accent color default
+    if(isOver) { r = 196; g = 61; b = 75; } // Red if overloaded
+    else if(isFull) { r = 22; g = 132; b = 91; } // Green if full capacity
+
+    vbaCode += `
+    ' Month ${mIdx + 1} Utilization
+    Dim util_${mIdx} As Shape
+    Set util_${mIdx} = pptSlide.Shapes.AddTextbox(msoTextOrientationHorizontal, startLeft + (${mIdx} * colWidth), utilTop, colWidth, utilH)
+    util_${mIdx}.TextFrame.TextRange.Text = "${fmt(used)} / ${teamSize} MM"
+    util_${mIdx}.TextFrame.TextRange.Font.Size = 10
+    util_${mIdx}.TextFrame.TextRange.Font.Bold = msoTrue
+    util_${mIdx}.TextFrame.TextRange.Font.Color.RGB = RGB(${r}, ${g}, ${b})
+    util_${mIdx}.TextFrame.TextRange.ParagraphFormat.Alignment = ppAlignCenter
+`;
+  });
+
+  vbaCode += `
+    MsgBox "Gantt chart timeline generated successfully!", vbInformation, "Export Complete"
+End Sub
+
+Sub SnapConnector(conn As Shape, fromShp As Shape, toShp As Shape, fromX As Single, fromY As Single, toX As Single, toY As Single)
+    Dim i As Integer, bestI As Integer
+    Dim bestD As Double, d As Double
+    Dim dx As Single, dy As Single
+
+    bestI = 1
+    bestD = 1000000000#
+    For i = 1 To fromShp.ConnectionSiteCount
+        If conn.ConnectorFormat.BeginConnected = msoTrue Then conn.ConnectorFormat.BeginDisconnect
+        conn.ConnectorFormat.BeginConnect fromShp, i
+        dx = conn.Left - fromX
+        dy = conn.Top - fromY
+        d = dx * dx + dy * dy
+        If d < bestD Then bestD = d: bestI = i
+        dx = (conn.Left + conn.Width) - fromX
+        dy = (conn.Top + conn.Height) - fromY
+        d = dx * dx + dy * dy
+        If d < bestD Then bestD = d: bestI = i
+    Next i
+    If conn.ConnectorFormat.BeginConnected = msoTrue Then conn.ConnectorFormat.BeginDisconnect
+    conn.ConnectorFormat.BeginConnect fromShp, bestI
+
+    bestI = 1
+    bestD = 1000000000#
+    For i = 1 To toShp.ConnectionSiteCount
+        If conn.ConnectorFormat.EndConnected = msoTrue Then conn.ConnectorFormat.EndDisconnect
+        conn.ConnectorFormat.EndConnect toShp, i
+        dx = conn.Left - toX
+        dy = conn.Top - toY
+        d = dx * dx + dy * dy
+        If d < bestD Then bestD = d: bestI = i
+        dx = (conn.Left + conn.Width) - toX
+        dy = (conn.Top + conn.Height) - toY
+        d = dx * dx + dy * dy
+        If d < bestD Then bestD = d: bestI = i
+    Next i
+    If conn.ConnectorFormat.EndConnected = msoTrue Then conn.ConnectorFormat.EndDisconnect
+    conn.ConnectorFormat.EndConnect toShp, bestI
+End Sub
+`;
+
+  const blob = new Blob([vbaCode], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Gantt_Roadmap.bas';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  $('pptModal').style.display = 'flex';
+  setStatus('PowerPoint .bas macro downloaded successfully.', 'ok');
+});
+
+$('closeModal').addEventListener('click', () => {
+  $('pptModal').style.display = 'none';
+});
+
+function hexToRgb(hex) {
+  let c = hex ? hex.replace('#','') : '5b63e8';
+  if(c.length === 3) c = c.split('').map(x=>x+x).join('');
+  let num = parseInt(c, 16);
+  return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
+}
+
+function safeVbaString(str) {
+  return String(str || '').replace(/"/g, '""');
+}
+
+render();
+})();
+</script>
+</body>
+</html>
