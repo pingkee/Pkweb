@@ -695,7 +695,7 @@
     /* Projects */
     .projects-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 18px;
     }
     .project-card {
@@ -728,8 +728,10 @@
     }
     .art-mobile { background: linear-gradient(135deg, #e7ecfb, #f7f6f2); }
     .art-web { background: linear-gradient(135deg, #f3eddf, #f7f6f2); }
+    .art-data { background: linear-gradient(135deg, #e2efe7, #f7f6f2); }
     :root[data-theme="dark"] .art-mobile { background: linear-gradient(135deg, #162447, #111b2d); }
     :root[data-theme="dark"] .art-web { background: linear-gradient(135deg, #2a2216, #111b2d); }
+    :root[data-theme="dark"] .art-data { background: linear-gradient(135deg, #172a20, #111b2d); }
     .project-art svg { position: relative; width: 62px; height: 62px; color: var(--accent); opacity: .9; }
     .project-body { display: flex; flex-direction: column; flex: 1; padding: 23px; }
     .project-kicker {
@@ -1273,7 +1275,7 @@
         <div class="section-head" data-reveal>
           <p class="eyebrow">Selected work</p>
           <h2 id="projects-title">Products you can try.</h2>
-          <p class="section-lede">A couple of projects that show the range of what I build — one in your pocket, one in the browser.</p>
+          <p class="section-lede">A few projects that show the range of what I build — in your pocket, in the browser, and in the markets.</p>
         </div>
 
         <div class="projects-grid">
@@ -1312,6 +1314,25 @@
               </ul>
               <div class="project-links">
                 <a href="/project-management/">Open planner <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </article>
+
+          <article class="project-card" data-reveal>
+            <div class="project-art art-data" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3.5 20.5h17"/><path d="M7 20.5V13M12 20.5V7M17 20.5v-5"/></svg>
+            </div>
+            <div class="project-body">
+              <p class="project-kicker">Web app</p>
+              <h3>Equity Screener</h3>
+              <p>A browser-based stock screener that ranks a Yahoo Finance CSV export into growth, net-net and quality screens with editable weights. Parsed entirely in the browser.</p>
+              <ul class="tags" aria-label="Technologies">
+                <li class="tag">JavaScript</li>
+                <li class="tag">CSV</li>
+                <li class="tag">Finance</li>
+              </ul>
+              <div class="project-links">
+                <a href="/financial-screener/">Open screener <span aria-hidden="true">→</span></a>
               </div>
             </div>
           </article>
