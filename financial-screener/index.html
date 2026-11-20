@@ -373,6 +373,18 @@
     color: var(--ink);
   }
 
+  .lede a {
+    color: var(--focus);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .lede a:hover {
+    color: var(--ink);
+  }
+
   .dataset-card {
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -1539,7 +1551,7 @@
       <div>
         <p class="kicker">Screening workbench</p>
         <h1 id="page-title">Three screens, one stock list.</h1>
-        <p class="lede">Import the CSV from <code>stock_ratios.py</code>, or drop files anywhere on this page. Hard filters decide who qualifies; the weights decide the order. Every ranking is computed in the browser.</p>
+        <p class="lede">These are the companies I screen each year, ranked for growth, balance-sheet value and capital discipline. The <a href="https://github.com/pingkee/financial_guage" target="_blank" rel="noopener">GitHub project</a> contains the Python scraper that gathers each company's financial data from public web sources; import its CSV export to reproduce these screens. Every filter and score is computed locally in your browser.</p>
       </div>
       <aside class="dataset-card" aria-label="Dataset summary">
         <div class="dataset-top">
