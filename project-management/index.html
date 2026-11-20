@@ -122,7 +122,7 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
 </header>
 <main>
 <section class="panel">
-  <div class="section-head"><div><h2>1. Plan settings</h2><div class="sub">Set team size (monthly MM capacity) and current timeframe.</div></div></div>
+  <div class="section-head"><div><h2>1. Plan settings</h2><div class="sub">Set team size (monthly MM capacity) and current timeframe. Settings persist in this browser and are saved into the plan CSV with Save to GitHub.</div></div></div>
   <div class="setup-grid">
     <div><label for="teamSize">Team size (people / monthly MM)</label><input id="teamSize" type="number" min="1" max="500" value="3"></div>
     <div><label for="currentMonth">Current month (1–12)</label><input id="currentMonth" type="number" min="1" max="12" value="1"></div>
@@ -330,6 +330,7 @@ const defaultPalette=['#5b63e8','#008f9c','#8b5cc7','#d46a3b','#3478c5','#b34d7c
 const GITHUB_CONFIG={owner:'pingkee',repo:'Pkweb',branch:'gh-pages',dataDir:'project-management/data'};
 const GITHUB_TOKEN_KEY='pk_github_token';
 const GITHUB_LAST_FILE_KEY='pk_last_csv';
+const PLAN_SETTINGS_KEY='pk_plan_settings';
 
 let teamSize=3, year=new Date().getFullYear(), currentMonth=new Date().getMonth()+1, jobs=[], nextId=1;
 let editingJobId = null;
@@ -1154,20 +1155,78 @@ $('applySettings').addEventListener('click', ()=>{
   }
   teamSize=newTeam;
   currentMonth=newMonth;
+  saveLocalSettings();
   render();
   setStatus('Plan settings updated successfully.','ok');
 });
 
-$('prevYear').addEventListener('click', ()=>{ year--; render(); });
-$('nextYear').addEventListener('click', ()=>{ year++; render(); });
+$('plannerTitle').addEventListener('input', ()=>{
+  $('chartTitle').textContent=$('plannerTitle').value.trim()||'6. Interactive Gantt Timeline';
+  saveLocalSettings();
+});
+
+$('prevYear').addEventListener('click', ()=>{ year--; saveLocalSettings(); render(); });
+$('nextYear').addEventListener('click', ()=>{ year++; saveLocalSettings(); render(); });
 $('clearJobs').addEventListener('click', ()=>{ if(confirm('Clear all tasks?')){ jobs=[]; render(); setStatus('All tasks cleared.'); } });
 $('addGroupBtn').addEventListener('click', ()=>{ addTaskGroup('New group'); render(); setStatus('Task group added.','ok'); });
 
 bindGanttBarDrag($('ganttChart'));
 
 // CSV serialization / import
+function parseCsvLine(line){
+  const out=[];
+  let cur='';
+  let inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(inQuotes){
+      if(ch==='"' && line[i+1]==='"'){ cur+='"'; i++; }
+      else if(ch==='"'){ inQuotes=false; }
+      else cur+=ch;
+    }else{
+      if(ch==='"') inQuotes=true;
+      else if(ch===','){ out.push(cur); cur=''; }
+      else cur+=ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function applyPlanSettings(settings){
+  if(!settings) return;
+  const t=Number(settings.teamSize);
+  if(Number.isFinite(t) && t>=1 && t<=500) teamSize=t;
+  const m=Number(settings.currentMonth);
+  if(Number.isFinite(m) && m>=1 && m<=12) currentMonth=Math.round(m);
+  const y=Number(settings.year);
+  if(Number.isFinite(y) && y>=2000 && y<=2100) year=Math.round(y);
+  if(typeof settings.planName==='string') $('plannerTitle').value=settings.planName;
+}
+
+function saveLocalSettings(){
+  try{
+    localStorage.setItem(PLAN_SETTINGS_KEY, JSON.stringify({
+      teamSize,
+      currentMonth,
+      year,
+      planName:$('plannerTitle').value
+    }));
+  }catch(e){}
+}
+
+function loadLocalSettings(){
+  try{
+    const raw=localStorage.getItem(PLAN_SETTINGS_KEY);
+    if(!raw) return;
+    applyPlanSettings(JSON.parse(raw));
+  }catch(e){}
+}
+
 function serializeCsv(){
-  let csv='Name,MM,MaxPersons,StartMonth,StartYear,Group,GroupColor,Blocker\n';
+  const planName=$('plannerTitle').value.trim();
+  let csv=`#planner-settings,${teamSize},${currentMonth},${year},"${planName.replace(/"/g,'""')}"\n`;
+  csv+='Name,MM,MaxPersons,StartMonth,StartYear,Group,GroupColor,Blocker\n';
   jobs.forEach(j=>{
     let sM, sY;
     if(j.customStartAbs === undefined){
@@ -1189,21 +1248,42 @@ function importCsvText(text){
   nextId = 1;
   editingJobId = null;
   editingTableId = null;
-  const lines=String(text).split(/\r?\n/);
-  let count=0;
-  for(let i=1; i<lines.length; i++){
+  const lines=String(text).replace(/^﻿/,'').split(/\r?\n/);
+  let settings=null;
+  let headerIndex=-1;
+  for(let i=0; i<lines.length; i++){
     const line=lines[i].trim();
     if(!line)continue;
-    const parts=line.match(/(".*?"|[^",\s]+)(?=\s*,\s*|\s*$)/g);
-    if(parts && parts.length>=5){
-      const name=parts[0].replace(/^"|"$/g,'').replace(/""/g,'"');
+    const parts=parseCsvLine(line);
+    const first=(parts[0]||'').trim().toLowerCase();
+    if(!settings && first==='#planner-settings'){
+      settings={
+        teamSize:Number(parts[1]),
+        currentMonth:Number(parts[2]),
+        year:Number(parts[3]),
+        planName:parts[4]||''
+      };
+    }
+    if(headerIndex<0 && first==='name' && parts.some(p=>String(p).trim().toUpperCase()==='MM')){
+      headerIndex=i;
+    }
+  }
+  if(settings) applyPlanSettings(settings);
+  const start=(headerIndex>=0 ? headerIndex+1 : 1);
+  let count=0;
+  for(let i=start; i<lines.length; i++){
+    const line=lines[i].trim();
+    if(!line || line.startsWith('#'))continue;
+    const parts=parseCsvLine(line);
+    if(parts.length>=5){
+      const name=(parts[0]||'').trim();
       const mm=Number(parts[1]);
       const maxPeople=Number(parts[2]);
       const sM=Number(parts[3]);
       const sY=Number(parts[4]);
-      const groupRaw = parts[5] ? parts[5].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
-      const groupColorRaw = parts[6] ? parts[6].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
-      const blockerRaw = parts[7] ? parts[7].replace(/^"|"$/g,'').replace(/""/g,'"').trim() : '';
+      const groupRaw=(parts[5]||'').trim();
+      const groupColorRaw=(parts[6]||'').trim();
+      const blockerRaw=(parts[7]||'').trim();
       const gcolor = (groupColorRaw && HEX_RE.test(groupColorRaw)) ? normalizeHex(groupColorRaw) : null;
       if(name && Number.isFinite(mm) && Number.isFinite(maxPeople)){
         const isBacklog = (sM < 0 || !Number.isFinite(sM));
@@ -1230,6 +1310,7 @@ function importCsvText(text){
   jobs.forEach(job => {
     if(!taskGroups.some(g => g.id === job.groupId)) job.groupId = taskGroups[0].id;
   });
+  saveLocalSettings();
   render();
   return count;
 }
@@ -1843,6 +1924,7 @@ function startNewPlan(){
   nextGroupId=5;
   $('plannerTitle').value='';
   setCurrentCsvName('');
+  saveLocalSettings();
   render();
   closeLoadModal();
   setSyncStatus('Started a new plan. Enter a file name in section 8 when you save it.','ok');
@@ -1896,6 +1978,7 @@ $('forgetToken').addEventListener('click', ()=>{
   if(last) $('githubFileName').value=last;
 })();
 
+loadLocalSettings();
 render();
 openLoadModal();
 })();
