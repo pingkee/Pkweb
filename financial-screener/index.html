@@ -53,6 +53,7 @@
     --focus: #2a78d6;
     --wash-hard: rgba(42, 120, 214, 0.055);
     --overlay: rgba(242, 244, 239, 0.86);
+    --backdrop: rgba(18, 30, 24, 0.38);
     --shadow: 0 1px 2px rgba(18, 30, 24, 0.04), 0 18px 40px -34px rgba(18, 30, 24, 0.4);
     --shadow-sm: 0 1px 2px rgba(18, 30, 24, 0.08);
     --radius: 16px;
@@ -92,6 +93,7 @@
       --focus: #7db1f0;
       --wash-hard: rgba(57, 135, 229, 0.11);
       --overlay: rgba(15, 21, 18, 0.88);
+      --backdrop: rgba(0, 0, 0, 0.62);
       --shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 24px 48px -36px rgba(0, 0, 0, 0.8);
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
     }
@@ -127,6 +129,7 @@
     --focus: #7db1f0;
     --wash-hard: rgba(57, 135, 229, 0.11);
     --overlay: rgba(15, 21, 18, 0.88);
+    --backdrop: rgba(0, 0, 0, 0.62);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 24px 48px -36px rgba(0, 0, 0, 0.8);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
   }
@@ -305,6 +308,7 @@
   .btn svg { display: block; flex: 0 0 auto; }
   .btn:hover { opacity: 0.88; }
   .btn:active { transform: translateY(1px); }
+  .btn:disabled { cursor: progress; opacity: 0.72; }
 
   .btn-primary {
     background: var(--inverse);
@@ -543,18 +547,21 @@
   }
 
   #screen-panel[data-screen="growth"],
+  #detail-drawer[data-screen="growth"],
   .controls[data-screen="growth"] {
     --cat: var(--cat-growth);
     --cat-soft: var(--cat-growth-soft);
   }
 
   #screen-panel[data-screen="netNet"],
+  #detail-drawer[data-screen="netNet"],
   .controls[data-screen="netNet"] {
     --cat: var(--cat-netnet);
     --cat-soft: var(--cat-netnet-soft);
   }
 
   #screen-panel[data-screen="netGrowth"],
+  #detail-drawer[data-screen="netGrowth"],
   .controls[data-screen="netGrowth"] {
     --cat: var(--cat-netgrowth);
     --cat-soft: var(--cat-netgrowth-soft);
@@ -935,6 +942,13 @@
     letter-spacing: 0;
   }
 
+  .list-hint {
+    margin: -2px 0 9px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
   .ranking {
     display: block;
     margin: 0;
@@ -949,18 +963,20 @@
 
   .rank-row {
     display: grid;
-    grid-template-columns: 38px minmax(155px, 1.05fr) minmax(285px, 1.55fr) 96px;
-    grid-template-areas: "rank identity metrics score";
+    grid-template-columns: 38px minmax(155px, 1.05fr) minmax(285px, 1.55fr) 96px 26px;
+    grid-template-areas: "rank identity metrics score open";
     align-items: center;
     gap: 17px;
     min-width: 0;
     padding: 15px 17px;
     border-bottom: 1px solid var(--line);
+    cursor: pointer;
     transition: background 120ms ease;
   }
 
   .rank-row:last-child { border-bottom: 0; }
-  .rank-row:hover { background: var(--surface-3); }
+  .rank-row:hover,
+  .rank-row:focus-within { background: var(--surface-3); }
 
   .rank-row.is-leader {
     box-shadow: inset 3px 0 0 var(--cat);
@@ -1163,6 +1179,31 @@
     font-size: 8px;
     line-height: 1.3;
   }
+
+  .row-open {
+    grid-area: open;
+    align-self: center;
+    justify-self: end;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+
+  .row-open:hover {
+    border-color: var(--cat);
+    background: var(--cat-soft);
+    color: var(--ink);
+  }
+
+  .row-open svg { display: block; }
 
   /* ---------- excluded + empty ---------- */
   .excluded {
@@ -1498,14 +1539,355 @@
     margin-top: 14px;
   }
 
+  /* ---------- company detail drawer ---------- */
+  body.detail-open { overflow: hidden; }
+
+  .detail-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: flex;
+    justify-content: flex-end;
+    background: var(--backdrop);
+  }
+
+  .detail-drawer {
+    display: flex;
+    flex-direction: column;
+    width: min(500px, 100%);
+    height: 100vh;
+    height: 100dvh;
+    border-left: 1px solid var(--line-strong);
+    background: var(--surface);
+    box-shadow: -24px 0 60px -40px rgba(0, 0, 0, 0.55);
+  }
+
+  .detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    flex: 0 0 auto;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+    padding-bottom: 16px;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid var(--line);
+  }
+
+  .detail-heading { min-width: 0; }
+
+  .detail-heading .kicker { color: var(--muted); }
+
+  .detail-heading h2 {
+    margin: 6px 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(24px, 5vw, 31px);
+    font-weight: 600;
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-sub {
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-close {
+    appearance: none;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--surface-3);
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+
+  .detail-close:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
+  .detail-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 16px max(20px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  }
+
+  .detail-scorecard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px 14px;
+    border: 1px solid var(--cat);
+    border-radius: 12px;
+    background: var(--cat-soft);
+  }
+
+  .detail-scorecard .score-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    color: var(--ink);
+  }
+
+  .detail-scorecard .score-main span {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  .detail-scorecard .score-main strong {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+  }
+
+  .detail-scorecard .score-main small {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    color: var(--muted);
+  }
+
+  .detail-rank {
+    text-align: right;
+  }
+
+  .detail-rank strong {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .detail-rank span {
+    display: block;
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .detail-section {
+    margin-top: 17px;
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+  }
+
+  .detail-section:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+
+  .detail-section h3 {
+    margin: 0 0 8px;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .detail-context {
+    margin: 8px 0 11px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px;
+  }
+
+  .detail-metric {
+    min-width: 0;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .detail-label {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 7.8px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .detail-value {
+    margin-top: 3px;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-value.pos { color: var(--pos); }
+  .detail-value.neg { color: var(--neg); }
+
+  .detail-sub-line {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-breakdown { display: grid; gap: 0; }
+
+  .breakdown-row {
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .breakdown-row:first-child { border-top: 0; padding-top: 0; }
+
+  .bd-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .bd-label {
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .bd-label .dir {
+    margin-left: 2px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8px;
+  }
+
+  .bd-raw {
+    flex: 0 0 auto;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  .bd-bar {
+    height: 3px;
+    margin-top: 7px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: var(--line);
+  }
+
+  .bd-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--cat);
+  }
+
+  .bd-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 4px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    line-height: 1.35;
+  }
+
+  .breakdown-row.is-inactive { opacity: 0.5; }
+  .breakdown-row.is-inactive .bd-bar span { background: var(--line-strong); }
+
+  .detail-note-box {
+    margin: 0;
+    padding: 10px 11px;
+    border-radius: 8px;
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-size: 10.5px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-empty-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.55;
+  }
+
+  .detail-footer {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    line-height: 1.5;
+  }
+
+  @keyframes detail-slide-in {
+    from { transform: translateX(24px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes detail-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .detail-drawer { animation: detail-slide-in 180ms ease-out; }
+    .detail-overlay { animation: detail-fade-in 130ms ease-out; }
+  }
+
   /* ---------- responsive ---------- */
   @media (max-width: 1120px) {
     .rank-row {
-      grid-template-columns: 36px minmax(145px, 0.9fr) minmax(240px, 1.35fr) 88px;
-      gap: 14px;
+      grid-template-columns: 34px minmax(0, 1fr) 82px 26px;
+      grid-template-areas:
+        "rank identity score open"
+        "metrics metrics metrics metrics";
+      gap: 11px 12px;
+      padding: 14px 15px;
     }
-    .metrics { gap: 9px; }
+    .metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 17px;
+      padding-top: 2px;
+    }
     .metric-value { font-size: 10.5px; }
+    .score-value { font-size: 17px; }
   }
 
   @media (max-width: 920px) {
@@ -1520,20 +1902,6 @@
     .controls { position: static; }
     .settings-toggle { display: inline-flex; }
     .controls.is-collapsed .controls-body { display: none; }
-    .rank-row {
-      grid-template-columns: 34px minmax(0, 1fr) 82px;
-      grid-template-areas:
-        "rank identity score"
-        "metrics metrics metrics";
-      gap: 11px 12px;
-      padding: 14px 15px;
-    }
-    .metrics {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px 17px;
-      padding-top: 2px;
-    }
-    .score-value { font-size: 17px; }
     .method-grid { grid-template-columns: 1fr 1fr; gap: 18px; }
   }
 
@@ -1575,6 +1943,7 @@
     .excluded-list { grid-template-columns: 1fr; }
     .method-grid { grid-template-columns: 1fr; }
     .empty { padding: 30px 18px; }
+    .detail-drawer { width: 100%; border-left: 0; }
   }
 
   @media (max-width: 430px) {
@@ -1583,11 +1952,16 @@
       padding-right: max(16px, env(safe-area-inset-right, 0px));
     }
     .rank-row {
-      grid-template-columns: 30px minmax(0, 1fr) 64px;
+      grid-template-columns: 30px minmax(0, 1fr) 60px 26px;
+      grid-template-areas:
+        "rank identity score open"
+        "metrics metrics metrics metrics";
       padding: 13px 12px;
-      gap: 9px 10px;
+      gap: 9px 8px;
     }
     .rank-no { width: 24px; height: 24px; font-size: 9px; }
+    .row-open { width: 26px; height: 26px; border-radius: 7px; }
+    .detail-grid { grid-template-columns: 1fr; }
     .ticker { font-size: 8px; }
     .identity-meta { font-size: 9px; }
     .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 12px; }
@@ -1715,6 +2089,7 @@
           <span class="list-caption" id="list-caption">Composite percentile · highest first</span>
           <span class="weight-summary" id="weight-summary"></span>
         </div>
+        <p class="list-hint" id="list-hint">Select any row for the full ratio sheet.</p>
 
         <ol class="ranking" id="ranking"></ol>
 
@@ -1762,6 +2137,24 @@
       <span>Local-only CSV import · Not investment advice.</span>
     </footer>
   </main>
+</div>
+
+<div class="detail-overlay" id="detail-overlay" hidden>
+  <section class="detail-drawer" id="detail-drawer" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-describedby="detail-sub" tabindex="-1" data-screen="growth">
+    <header class="detail-head">
+      <div class="detail-heading">
+        <p class="kicker" id="detail-kicker">Company detail</p>
+        <h2 id="detail-title">Company</h2>
+        <p class="detail-sub" id="detail-sub"></p>
+      </div>
+      <button type="button" class="detail-close" id="detail-close" aria-label="Close company detail">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+          <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+        </svg>
+      </button>
+    </header>
+    <div class="detail-body" id="detail-body"></div>
+  </section>
 </div>
 
 <div class="drop-overlay" id="drop-overlay" hidden>
@@ -1929,7 +2322,10 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
     settings: clone(DEFAULT_SETTINGS),
     noticeTimer: null,
     settingsSaveTimer: null,
-    universeTimer: null
+    universeTimer: null,
+    detailOpen: false,
+    detailTicker: null,
+    detailTrigger: null
   };
 
   function clone(value) {
@@ -2575,7 +2971,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
       ? '<span class="note-flag" role="img" title="' + esc(row.notes) + '" aria-label="Data note: ' + esc(row.notes) + '">i</span>'
       : "";
 
-    return '<li class="rank-row' + (isLeader ? " is-leader" : "") + '">' +
+    return '<li class="rank-row' + (isLeader ? " is-leader" : "") + '" data-ticker="' + esc(row.ticker) + '">' +
       '<div class="rank-no" aria-label="Rank ' + (index + 1) + '">' + marker + "</div>" +
       '<div class="identity">' +
         '<div class="company-line"><h3>' + esc(row.company || row.ticker) + '</h3><span class="ticker">' + esc(row.ticker) + "</span>" + noteFlag + "</div>" +
@@ -2588,7 +2984,263 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
         '<div class="score-bar" aria-hidden="true"><span style="width:' + clamp(entry.score, 0, 100).toFixed(1) + '%"></span></div>' +
         coverage +
       "</div>" +
+      '<button type="button" class="row-open" aria-haspopup="dialog" aria-controls="detail-drawer" aria-label="View all ratios for ' + esc(row.company || row.ticker) + ' (' + esc(row.ticker) + ')" title="View all ratios">' +
+        '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"></path></svg>' +
+      "</button>" +
     "</li>";
+  }
+
+  function detailMetric(label, value, sub, tone) {
+    return '<div class="detail-metric">' +
+      '<div class="detail-label">' + esc(label) + "</div>" +
+      '<div class="detail-value ' + (tone || "") + '">' + esc(value || "—") + "</div>" +
+      (sub ? '<div class="detail-sub-line">' + esc(sub) + "</div>" : "") +
+    "</div>";
+  }
+
+  function detailBodyHtml(entry, result, rank) {
+    var row = entry.row;
+    var equityPeriod = fmtPeriod(row.equityPeriod);
+    var revenuePeriod = fmtPeriod(row.revenuePeriod);
+    var sharePeriod = fmtPeriod(row.sharePeriod);
+    var shareSub = [];
+    if (isNum(row.shareChange)) {
+      shareSub.push(row.shareChange > 0 ? "Dilution" : row.shareChange < 0 ? "Buyback" : "No change");
+    }
+    if (sharePeriod) shareSub.push(sharePeriod);
+
+    var shareTone = isNum(row.shareChange)
+      ? (row.shareChange > 0 ? "neg" : row.shareChange < 0 ? "pos" : "")
+      : "";
+
+    var pfcfSub = "Trailing";
+    if (!isNum(row.pFcf)) {
+      pfcfSub = isNum(row.fcf) && row.fcf <= 0
+        ? "Not meaningful: FCF is not positive"
+        : "Not available";
+    }
+
+    var pegSub = "Trailing";
+    if (!isNum(row.peg)) pegSub = "Not available";
+    else if (row.peg <= 0) pegSub = "Non-positive PEG is not scored";
+
+    var liqRatio = liquidationRatio(row);
+    var liqSub = row.liquidationAsOf
+      ? "Balance sheet " + row.liquidationAsOf
+      : "Latest reported balance sheet";
+
+    var breakdown = result.displayCriteria.map(function (criterion) {
+      var component = entry.components.find(function (item) { return item.key === criterion.key; });
+      var raw = component ? component.raw : null;
+      var display = metricDisplay(criterion, raw);
+      var score = component && component.score != null ? component.score : null;
+      var weight = component ? component.weight : 0;
+      var active = Boolean(component && component.active);
+      var metaLeft = score != null
+        ? "Percentile " + Math.round(score)
+        : active ? "No data" : "Weight 0";
+      return '<div class="breakdown-row' + (active ? "" : " is-inactive") + '">' +
+        '<div class="bd-top">' +
+          '<span class="bd-label">' + esc(criterion.label) + '<span class="dir" aria-hidden="true">' + (criterion.dir === "low" ? "↓" : "↑") + "</span></span>" +
+          '<span class="bd-raw">' + esc(display.text) + "</span>" +
+        "</div>" +
+        '<div class="bd-bar" aria-hidden="true"><span style="width:' + (score != null ? clamp(score, 0, 100) : 0).toFixed(1) + '%"></span></div>' +
+        '<div class="bd-meta"><span>' + esc(metaLeft) + "</span><span>" + Math.round(weight * 100) + "% weight</span></div>" +
+      "</div>";
+    }).join("");
+
+    var valuation = [
+      detailMetric("P/E", fmtMultiple(row.pe), "Trailing"),
+      detailMetric("P/B", fmtMultiple(row.pb), "Price / book"),
+      detailMetric("P/S", fmtMultiple(row.ps), "Price / sales"),
+      detailMetric("P/FCF", fmtMultiple(row.pFcf), pfcfSub),
+      detailMetric("PEG", fmtMultiple(row.peg), pegSub),
+      detailMetric("Market cap", fmtMoney(row.marketCap, row.currency) || "—", "Trading currency")
+    ].join("");
+
+    var growth = [
+      detailMetric(
+        "Equity growth",
+        fmtPct(row.equityGrowth, true),
+        equityPeriod ? equityPeriod + " total" : "Total change",
+        isNum(row.equityGrowth) ? (row.equityGrowth > 0 ? "pos" : row.equityGrowth < 0 ? "neg" : "") : ""
+      ),
+      detailMetric(
+        "Equity CAGR",
+        fmtPct(row.equityCagr, true),
+        equityPeriod ? "Annualized · " + equityPeriod : "Annualized",
+        isNum(row.equityCagr) ? (row.equityCagr > 0 ? "pos" : row.equityCagr < 0 ? "neg" : "") : ""
+      ),
+      detailMetric(
+        "Revenue YoY",
+        fmtPct(row.revenueYoy, true),
+        "Latest fiscal year",
+        isNum(row.revenueYoy) ? (row.revenueYoy > 0 ? "pos" : row.revenueYoy < 0 ? "neg" : "") : ""
+      ),
+      detailMetric(
+        "Revenue CAGR",
+        fmtPct(row.revenueCagr, true),
+        revenuePeriod ? "Annualized · " + revenuePeriod : "Annualized",
+        isNum(row.revenueCagr) ? (row.revenueCagr > 0 ? "pos" : row.revenueCagr < 0 ? "neg" : "") : ""
+      ),
+      detailMetric(
+        "5Y share count",
+        fmtPct(row.shareChange, true),
+        shareSub.join(" · ") || "Share-count change",
+        shareTone
+      )
+    ].join("");
+
+    var balance = [
+      detailMetric("Liquidation value", fmtMoney(row.liquidationValue, row.currency) || "—", liqSub),
+      detailMetric("Liquidation / market cap", fmtRatio(liqRatio), "Higher means more asset cushion"),
+      detailMetric("Free cash flow", fmtMoney(row.fcf, row.currency) || "—", "Trailing"),
+      detailMetric("Financial currency", row.financialCurrency || "—", "Reporting currency")
+    ].join("");
+
+    var source = [
+      detailMetric("Snapshot date", row.asOf || "—", row.sourceFile || "Source file"),
+      detailMetric("Trading currency", row.currency || "—", "Market values"),
+      detailMetric("Share period", sharePeriod || "—", "Actual share-count window"),
+      detailMetric("Equity period", equityPeriod || "—", "Actual equity-growth window")
+    ].join("");
+
+    return '<div class="detail-scorecard">' +
+        '<div class="score-main"><span>Score</span><strong>' + entry.score.toFixed(1) + '</strong><small>/ 100</small></div>' +
+        '<div class="detail-rank"><strong>Rank #' + rank + " of " + result.ranked.length + '</strong><span>' + esc(SCREENS[result.screen].name) + "</span></div>" +
+      "</div>" +
+      '<section class="detail-section">' +
+        "<h3>Ranking breakdown</h3>" +
+        '<p class="detail-context">Percentiles are relative to the ' + result.ranked.length + " ranked stocks in this screen. Weight is the normalized share of the composite score.</p>" +
+        '<div class="detail-breakdown">' + breakdown + "</div>" +
+      "</section>" +
+      '<section class="detail-section"><h3>Valuation</h3><div class="detail-grid">' + valuation + "</div></section>" +
+      '<section class="detail-section"><h3>Growth &amp; ownership</h3><div class="detail-grid">' + growth + "</div></section>" +
+      '<section class="detail-section"><h3>Balance sheet &amp; cash flow</h3><div class="detail-grid">' + balance + "</div></section>" +
+      '<section class="detail-section"><h3>Source data</h3><div class="detail-grid">' + source + "</div></section>" +
+      '<section class="detail-section"><h3>Data notes</h3>' +
+        '<p class="' + (row.notes ? "detail-note-box" : "detail-empty-note") + '">' +
+          esc(row.notes || "No source-data caveats recorded for this row.") +
+        "</p>" +
+      "</section>" +
+      '<p class="detail-footer">' + esc(row.asOf ? "Snapshot " + row.asOf : "Snapshot date unavailable") + " · Source values are supplied by stock_ratios.py. Not investment advice.</p>";
+  }
+
+  function findDetailEntry(ticker) {
+    var result = evaluateScreen(state.settings.activeScreen, state.rows, state.settings);
+    var index = result.ranked.findIndex(function (entry) {
+      return entry.row.ticker === ticker;
+    });
+    if (index < 0) return null;
+    return { result: result, entry: result.ranked[index], rank: index + 1 };
+  }
+
+  function openDetail(ticker, trigger) {
+    var found = findDetailEntry(ticker);
+    if (!found) return;
+
+    var row = found.entry.row;
+    var drawer = document.getElementById("detail-drawer");
+    var overlay = document.getElementById("detail-overlay");
+    var app = document.querySelector(".app");
+
+    state.detailOpen = true;
+    state.detailTicker = ticker;
+    state.detailTrigger = trigger || document.activeElement;
+
+    drawer.dataset.screen = found.result.screen;
+    document.getElementById("detail-kicker").textContent =
+      SCREENS[found.result.screen].name + " · Rank #" + found.rank + " of " + found.result.ranked.length;
+    document.getElementById("detail-title").textContent = row.company || row.ticker;
+
+    var subBits = [row.ticker];
+    if (row.sector) subBits.push(row.sector);
+    if (row.industry) subBits.push(row.industry);
+    var cap = fmtMoney(row.marketCap, row.currency);
+    if (cap) subBits.push(cap);
+    document.getElementById("detail-sub").textContent = subBits.join(" · ");
+
+    var body = document.getElementById("detail-body");
+    body.innerHTML = detailBodyHtml(found.entry, found.result, found.rank);
+    body.scrollTop = 0;
+
+    overlay.hidden = false;
+    document.body.classList.add("detail-open");
+    if (app) app.inert = true;
+
+    requestAnimationFrame(function () {
+      document.getElementById("detail-close").focus();
+    });
+  }
+
+  function closeDetail(restoreFocus) {
+    if (!state.detailOpen) return;
+    var trigger = state.detailTrigger;
+    var overlay = document.getElementById("detail-overlay");
+    var app = document.querySelector(".app");
+
+    overlay.hidden = true;
+    document.body.classList.remove("detail-open");
+    if (app) app.inert = false;
+
+    state.detailOpen = false;
+    state.detailTicker = null;
+    state.detailTrigger = null;
+
+    if (restoreFocus !== false) {
+      if (trigger && document.contains(trigger)) {
+        trigger.focus();
+      } else {
+        var activeTab = document.getElementById("tab-" + state.settings.activeScreen);
+        if (activeTab) activeTab.focus();
+      }
+    }
+  }
+
+  function handleDetailKeydown(event) {
+    if (!state.detailOpen) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeDetail();
+      return;
+    }
+
+    if (event.key !== "Tab") return;
+
+    var drawer = document.getElementById("detail-drawer");
+    var focusable = Array.prototype.slice.call(
+      drawer.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter(function (element) {
+      return !element.disabled && element.offsetParent !== null;
+    });
+
+    if (!focusable.length) {
+      event.preventDefault();
+      drawer.focus();
+      return;
+    }
+
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  function handleRankingClick(event) {
+    var row = event.target.closest(".rank-row");
+    if (!row) return;
+
+    var selectedText = window.getSelection ? String(window.getSelection()).trim() : "";
+    if (selectedText) return;
+
+    openDetail(row.dataset.ticker, row.querySelector(".row-open"));
   }
 
   function emptyCopy(result) {
@@ -2641,6 +3293,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
       : "";
     document.getElementById("list-caption").textContent = "Composite percentile" + basisLabel + " · highest first";
     document.getElementById("weight-summary").textContent = weightSummary(result);
+    document.getElementById("list-hint").hidden = result.ranked.length === 0;
 
     var ranking = document.getElementById("ranking");
     var empty = document.getElementById("empty-state");
@@ -2801,6 +3454,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
 
   function renderAll(options) {
     var opts = options || {};
+    if (state.detailOpen) closeDetail(false);
     var results = computeResults();
     updateDatasetUI();
     renderTabs(results);
@@ -2997,6 +3651,15 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
     });
 
     document.getElementById("reset-sample").addEventListener("click", resetToSample);
+
+    document.getElementById("ranking").addEventListener("click", handleRankingClick);
+    document.getElementById("detail-close").addEventListener("click", function () {
+      closeDetail();
+    });
+    document.getElementById("detail-overlay").addEventListener("click", function (event) {
+      if (event.target === event.currentTarget) closeDetail();
+    });
+    document.addEventListener("keydown", handleDetailKeydown);
 
     document.getElementById("save-data").addEventListener("click", openSaveModal);
     document.getElementById("save-cancel").addEventListener("click", closeSaveModal);
