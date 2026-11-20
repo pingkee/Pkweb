@@ -1,0 +1,3081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equity Screener — Ng Ping Kee</title>
+<meta name="description" content="A browser-based equity screener that ranks stocks into growth, net-net and quality screens with editable weights. CSV data is parsed locally and never uploaded.">
+<link rel="canonical" href="https://www.ngpingkee.com/financial-screener/">
+<meta name="theme-color" content="#f2f4ef">
+<link rel="icon" href="/assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Equity Screener — Ng Ping Kee">
+<meta property="og:description" content="Growth, net-net and quality screens computed in the browser from a stock_ratios.py CSV export.">
+<meta property="og:url" content="https://www.ngpingkee.com/financial-screener/">
+<meta property="og:image" content="https://www.ngpingkee.com/assets/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  /* Design plan: a quiet research terminal. Cool paper ground, fine rules,
+     mono data, and three identity hues that stay out of the way of the numbers. */
+  :root {
+    color-scheme: light;
+    --bg: #f2f4ef;
+    --surface: #ffffff;
+    --surface-2: #e9ede7;
+    --surface-3: #f7f8f4;
+    --ink: #17221c;
+    --ink-2: #506057;
+    --muted: #5f6f66;
+    --line: #dce3dc;
+    --line-strong: #c5d0c8;
+    --inverse: #15221b;
+    --inverse-ink: #f7faf6;
+    --cat-growth: #2a78d6;
+    --cat-growth-soft: #e7f1fc;
+    --cat-netnet: #eb6834;
+    --cat-netnet-soft: #fdf0e9;
+    --cat-netgrowth: #1baf7a;
+    --cat-netgrowth-soft: #e6f7ef;
+    --pos: #0a7435;
+    --neg: #b9382c;
+    --warn-bg: #fff7e6;
+    --warn-ink: #7a4c00;
+    --error-bg: #fdecea;
+    --error-ink: #8a2218;
+    --success-bg: #e8f6ee;
+    --success-ink: #0b5e31;
+    --focus: #2a78d6;
+    --wash-hard: rgba(42, 120, 214, 0.055);
+    --overlay: rgba(242, 244, 239, 0.86);
+    --shadow: 0 1px 2px rgba(18, 30, 24, 0.04), 0 18px 40px -34px rgba(18, 30, 24, 0.4);
+    --shadow-sm: 0 1px 2px rgba(18, 30, 24, 0.08);
+    --radius: 16px;
+    --font-ui: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-display: "Bricolage Grotesque", "Instrument Sans", sans-serif;
+    --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0f1512;
+      --surface: #161d1a;
+      --surface-2: #1e2823;
+      --surface-3: #121916;
+      --ink: #e9f0eb;
+      --ink-2: #b3c0b8;
+      --muted: #8b9a91;
+      --line: #29352f;
+      --line-strong: #3b4c43;
+      --inverse: #eaf1ec;
+      --inverse-ink: #101713;
+      --cat-growth: #3987e5;
+      --cat-growth-soft: #15283d;
+      --cat-netnet: #d95926;
+      --cat-netnet-soft: #2d1c14;
+      --cat-netgrowth: #199e70;
+      --cat-netgrowth-soft: #102a21;
+      --pos: #5ed68b;
+      --neg: #ff8a7a;
+      --warn-bg: #2c2414;
+      --warn-ink: #f3cd82;
+      --error-bg: #2d1917;
+      --error-ink: #ffb2a7;
+      --success-bg: #12291d;
+      --success-ink: #8de1ad;
+      --focus: #7db1f0;
+      --wash-hard: rgba(57, 135, 229, 0.11);
+      --overlay: rgba(15, 21, 18, 0.88);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 24px 48px -36px rgba(0, 0, 0, 0.8);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0f1512;
+    --surface: #161d1a;
+    --surface-2: #1e2823;
+    --surface-3: #121916;
+    --ink: #e9f0eb;
+    --ink-2: #b3c0b8;
+    --muted: #8b9a91;
+    --line: #29352f;
+    --line-strong: #3b4c43;
+    --inverse: #eaf1ec;
+    --inverse-ink: #101713;
+    --cat-growth: #3987e5;
+    --cat-growth-soft: #15283d;
+    --cat-netnet: #d95926;
+    --cat-netnet-soft: #2d1c14;
+    --cat-netgrowth: #199e70;
+    --cat-netgrowth-soft: #102a21;
+    --pos: #5ed68b;
+    --neg: #ff8a7a;
+    --warn-bg: #2c2414;
+    --warn-ink: #f3cd82;
+    --error-bg: #2d1917;
+    --error-ink: #ffb2a7;
+    --success-bg: #12291d;
+    --success-ink: #8de1ad;
+    --focus: #7db1f0;
+    --wash-hard: rgba(57, 135, 229, 0.11);
+    --overlay: rgba(15, 21, 18, 0.88);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 24px 48px -36px rgba(0, 0, 0, 0.8);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
+  }
+
+  * { box-sizing: border-box; }
+
+  [hidden] { display: none !important; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(900px 520px at 7% -12%, var(--wash-hard), transparent 68%),
+      var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button, input { font: inherit; }
+  button { color: inherit; }
+
+  ::selection {
+    background: var(--cat-growth-soft);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: 36px;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 17px 0 15px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .brand:hover .brand-name,
+  .brand:focus-visible .brand-name {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .brand-mark svg { display: block; }
+
+  .brand-eyebrow {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .brand-name {
+    display: block;
+    margin-top: 3px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .top-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 29px;
+    padding: 5px 9px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .status-chip::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .status-chip.is-sample::before { background: var(--muted); }
+  .status-chip.is-imported::before { background: var(--pos); }
+
+  .btn {
+    appearance: none;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 12px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease, opacity 140ms ease;
+  }
+
+  .btn svg { display: block; flex: 0 0 auto; }
+  .btn:hover { opacity: 0.88; }
+  .btn:active { transform: translateY(1px); }
+
+  .btn-primary {
+    background: var(--inverse);
+    border-color: var(--inverse);
+    color: var(--inverse-ink);
+  }
+
+  .btn-ghost {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink-2);
+  }
+
+  .btn-ghost:hover {
+    background: var(--surface-3);
+    color: var(--ink);
+    opacity: 1;
+  }
+
+  /* ---------- intro ---------- */
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 322px;
+    align-items: end;
+    gap: 48px;
+    padding: 36px 0 26px;
+  }
+
+  .kicker {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .intro h1 {
+    max-width: 13ch;
+    margin: 9px 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 600;
+    line-height: 0.99;
+    letter-spacing: -0.05em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    max-width: 57ch;
+    margin: 16px 0 0;
+    color: var(--ink-2);
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+
+  .lede code {
+    padding: 1px 4px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--ink);
+  }
+
+  .dataset-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    padding: 15px 17px 13px;
+  }
+
+  .dataset-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .dataset-date {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .dataset-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0 13px;
+  }
+
+  .stat strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 29px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.05em;
+  }
+
+  .stat span {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .file-line {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    margin: 0;
+    padding-top: 11px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- screen switcher ---------- */
+  .screen-switch {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+    margin-bottom: 23px;
+  }
+
+  .screen-tab {
+    --cat: var(--cat-growth);
+    --cat-soft: var(--cat-growth-soft);
+    position: relative;
+    appearance: none;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 4px 9px;
+    min-width: 0;
+    padding: 13px 14px 12px;
+    border: 1px solid var(--line);
+    border-top: 3px solid transparent;
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease;
+  }
+
+  .screen-tab[data-screen="growth"] { --cat: var(--cat-growth); --cat-soft: var(--cat-growth-soft); }
+  .screen-tab[data-screen="netNet"] { --cat: var(--cat-netnet); --cat-soft: var(--cat-netnet-soft); }
+  .screen-tab[data-screen="netGrowth"] { --cat: var(--cat-netgrowth); --cat-soft: var(--cat-netgrowth-soft); }
+
+  .screen-tab:hover { background: var(--surface-3); }
+  .screen-tab.is-active {
+    border-color: var(--cat);
+    border-top-color: var(--cat);
+    background: var(--cat-soft);
+  }
+
+  .tab-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--cat);
+  }
+
+  .tab-name {
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tab-count {
+    min-width: 27px;
+    padding: 4px 6px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+  }
+
+  .tab-rule {
+    grid-column: 2 / 4;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---------- workspace ---------- */
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(270px, 318px) minmax(0, 1fr);
+    align-items: start;
+    gap: 26px;
+  }
+
+  #screen-panel[data-screen="growth"],
+  .controls[data-screen="growth"] {
+    --cat: var(--cat-growth);
+    --cat-soft: var(--cat-growth-soft);
+  }
+
+  #screen-panel[data-screen="netNet"],
+  .controls[data-screen="netNet"] {
+    --cat: var(--cat-netnet);
+    --cat-soft: var(--cat-netnet-soft);
+  }
+
+  #screen-panel[data-screen="netGrowth"],
+  .controls[data-screen="netGrowth"] {
+    --cat: var(--cat-netgrowth);
+    --cat-soft: var(--cat-netgrowth-soft);
+  }
+
+  .controls {
+    position: sticky;
+    top: 18px;
+    padding: 15px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .controls-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .controls-head h2 {
+    margin: 0;
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .controls-actions {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .text-btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 6px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .text-btn:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
+  .settings-toggle { display: none; }
+
+  .controls-body { margin-top: 2px; }
+
+  .field {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+  }
+
+  .field:first-child {
+    margin-top: 10px;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .field-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--ink);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .field input[type="text"],
+  .field textarea {
+    width: 100%;
+    margin-top: 8px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-3);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1.55;
+    resize: vertical;
+  }
+
+  .field input[type="text"]::placeholder { color: var(--muted); }
+  .field input[type="text"]:focus,
+  .field textarea:focus { border-color: var(--focus); }
+
+  .hint {
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+
+  .segmented {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    margin-top: 8px;
+    padding: 3px;
+    border-radius: 9px;
+    background: var(--surface-2);
+  }
+
+  .segmented button {
+    appearance: none;
+    padding: 7px 7px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-2);
+    font-family: var(--font-ui);
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+  }
+
+  .segmented button:hover { color: var(--ink); }
+
+  .segmented button[aria-pressed="true"] {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .weights { margin-top: 11px; }
+
+  .weight {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .weight:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .weight-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .weight-top label {
+    color: var(--ink);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .weight-top output {
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .weight-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 4px 0 6px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .weight-meta span:last-child {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+  }
+
+  input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--cat) 0 var(--pct, 50%), var(--line) var(--pct, 50%) 100%);
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: 0 0 0 1px var(--line-strong);
+  }
+
+  input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 4px;
+    background: var(--line);
+  }
+
+  input[type="range"]::-moz-range-progress {
+    height: 4px;
+    border-radius: 4px;
+    background: var(--cat);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 11px;
+    height: 11px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+  }
+
+  .weight-warning {
+    margin: 10px 0 0;
+    padding: 8px 9px;
+    border-radius: 7px;
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-size: 9.5px;
+    line-height: 1.45;
+  }
+
+  .controls-note {
+    margin: 15px 0 0;
+    padding-top: 13px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.55;
+  }
+
+  /* ---------- main panel ---------- */
+  .screen-main { min-width: 0; }
+
+  .screen-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 22px;
+    padding: 3px 0 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .screen-head > div:first-child { min-width: 0; }
+
+  .screen-head h2 {
+    margin: 5px 0 8px;
+    font-family: var(--font-display);
+    font-size: clamp(27px, 3vw, 35px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+
+  .screen-desc {
+    max-width: 65ch;
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .gates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 12px;
+  }
+
+  .gate {
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .count-block {
+    flex: 0 0 auto;
+    min-width: 100px;
+    text-align: right;
+  }
+
+  .count-block strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 37px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.06em;
+  }
+
+  .count-block > span {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .count-block small {
+    display: block;
+    max-width: 175px;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 9.5px;
+    line-height: 1.45;
+  }
+
+  .list-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 1px 9px;
+  }
+
+  .list-caption,
+  .weight-summary {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    line-height: 1.4;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .weight-summary {
+    text-align: right;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .ranking {
+    display: block;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .rank-row {
+    display: grid;
+    grid-template-columns: 38px minmax(155px, 1.05fr) minmax(285px, 1.55fr) 96px;
+    grid-template-areas: "rank identity metrics score";
+    align-items: center;
+    gap: 17px;
+    min-width: 0;
+    padding: 15px 17px;
+    border-bottom: 1px solid var(--line);
+    transition: background 120ms ease;
+  }
+
+  .rank-row:last-child { border-bottom: 0; }
+  .rank-row:hover { background: var(--surface-3); }
+
+  .rank-row.is-leader {
+    box-shadow: inset 3px 0 0 var(--cat);
+    background: linear-gradient(90deg, var(--cat-soft), var(--surface) 46%);
+  }
+
+  .rank-no {
+    grid-area: rank;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-3);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .rank-row.is-leader .rank-no {
+    border-color: var(--cat);
+    background: var(--cat-soft);
+    color: var(--ink);
+  }
+
+  .identity {
+    grid-area: identity;
+    min-width: 0;
+  }
+
+  .company-line {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 5px 7px;
+  }
+
+  .company-line h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.012em;
+    overflow-wrap: anywhere;
+  }
+
+  .ticker {
+    padding: 3px 5px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .note-flag {
+    display: inline-grid;
+    place-items: center;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: help;
+  }
+
+  .identity-meta {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .metrics {
+    grid-area: metrics;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+    gap: 11px;
+    min-width: 0;
+  }
+
+  .metric { min-width: 0; }
+
+  .metric-label {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    overflow: hidden;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .metric-label .dir {
+    color: var(--muted);
+    font-size: 8px;
+  }
+
+  .metric-value {
+    margin-top: 3px;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  .metric-value .period {
+    margin-left: 3px;
+    color: var(--muted);
+    font-size: 8.5px;
+    font-weight: 400;
+  }
+
+  .metric-value.pos { color: var(--pos); }
+  .metric-value.neg { color: var(--neg); }
+
+  .metric-bar {
+    height: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: var(--line);
+  }
+
+  .metric-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--cat);
+  }
+
+  .metric.is-inactive { opacity: 0.5; }
+  .metric.is-inactive .metric-bar span { background: var(--line-strong); }
+
+  .score-cell {
+    grid-area: score;
+    min-width: 0;
+    text-align: right;
+  }
+
+  .score-value {
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .score-caption {
+    margin-top: 3px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    line-height: 1.2;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .score-bar {
+    height: 4px;
+    margin-top: 7px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--line);
+  }
+
+  .score-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: var(--cat);
+  }
+
+  .coverage {
+    margin-top: 5px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    line-height: 1.3;
+  }
+
+  /* ---------- excluded + empty ---------- */
+  .excluded {
+    margin-top: 15px;
+    border-top: 1px solid var(--line);
+  }
+
+  .excluded summary {
+    padding: 11px 0;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .excluded summary:hover { color: var(--ink); }
+  .excluded summary::marker { color: var(--muted); }
+
+  .excluded-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px 18px;
+    margin: 0;
+    padding: 0 0 10px;
+    list-style: none;
+  }
+
+  .excluded-list li {
+    color: var(--ink-2);
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+
+  .excluded-list li strong {
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 500;
+  }
+
+  .empty {
+    padding: 38px 24px;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    text-align: center;
+  }
+
+  .empty-mark {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--muted);
+    background: var(--surface-3);
+  }
+
+  .empty h3 {
+    margin: 0 0 7px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+
+  .empty p {
+    max-width: 50ch;
+    margin: 0 auto;
+    color: var(--ink-2);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .empty-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 17px;
+  }
+
+  /* ---------- notice ---------- */
+  .notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .notice[data-tone="success"] {
+    border-color: transparent;
+    background: var(--success-bg);
+    color: var(--success-ink);
+  }
+
+  .notice[data-tone="warn"] {
+    border-color: transparent;
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+  }
+
+  .notice[data-tone="error"] {
+    border-color: transparent;
+    background: var(--error-bg);
+    color: var(--error-ink);
+  }
+
+  .notice-text {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .notice-close {
+    appearance: none;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: currentColor;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+
+  .notice-close:hover { opacity: 1; background: var(--surface-2); }
+  .notice[data-tone="success"] .notice-close:hover,
+  .notice[data-tone="warn"] .notice-close:hover,
+  .notice[data-tone="error"] .notice-close:hover { background: transparent; }
+
+  /* ---------- method + footer ---------- */
+  .method {
+    margin-top: 30px;
+    border-top: 1px solid var(--line);
+  }
+
+  .method summary {
+    padding: 12px 0;
+    color: var(--ink-2);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+  }
+
+  .method summary::marker { color: var(--muted); }
+
+  .method-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    padding: 4px 0 14px;
+  }
+
+  .method h3 {
+    margin: 0 0 6px;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .method p {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 11.5px;
+    line-height: 1.65;
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---------- drag overlay ---------- */
+  .drop-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) calc(24px + env(safe-area-inset-left, 0px));
+    background: var(--overlay);
+    pointer-events: none;
+  }
+
+  .drop-panel {
+    max-width: 430px;
+    padding: 36px 42px;
+    border: 1.5px dashed var(--cat-growth);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+
+  .drop-panel h2 {
+    margin: 0 0 7px;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .drop-panel p {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1120px) {
+    .rank-row {
+      grid-template-columns: 36px minmax(145px, 0.9fr) minmax(240px, 1.35fr) 88px;
+      gap: 14px;
+    }
+    .metrics { gap: 9px; }
+    .metric-value { font-size: 10.5px; }
+  }
+
+  @media (max-width: 920px) {
+    .intro {
+      grid-template-columns: 1fr;
+      gap: 22px;
+      padding-top: 28px;
+    }
+    .intro h1 { max-width: 16ch; }
+    .dataset-card { max-width: 430px; }
+    .workspace { grid-template-columns: 1fr; gap: 18px; }
+    .controls { position: static; }
+    .settings-toggle { display: inline-flex; }
+    .controls.is-collapsed .controls-body { display: none; }
+    .rank-row {
+      grid-template-columns: 34px minmax(0, 1fr) 82px;
+      grid-template-areas:
+        "rank identity score"
+        "metrics metrics metrics";
+      gap: 11px 12px;
+      padding: 14px 15px;
+    }
+    .metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 17px;
+      padding-top: 2px;
+    }
+    .score-value { font-size: 17px; }
+    .method-grid { grid-template-columns: 1fr 1fr; gap: 18px; }
+  }
+
+  @media (max-width: 650px) {
+    .topbar {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .top-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+    .intro { padding-top: 24px; padding-bottom: 20px; }
+    .intro h1 { font-size: clamp(30px, 9vw, 40px); }
+    .lede { font-size: 13.5px; }
+    .screen-switch { grid-template-columns: 1fr; gap: 6px; }
+    .screen-tab {
+      padding: 10px 12px;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+    .tab-rule { display: none; }
+    .screen-head {
+      flex-direction: column;
+      gap: 12px;
+    }
+    .count-block {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      text-align: left;
+      min-width: 0;
+    }
+    .count-block strong { font-size: 29px; }
+    .count-block > span { margin-top: 0; }
+    .count-block small { max-width: none; margin-top: 0; margin-left: auto; text-align: right; }
+    .list-head { align-items: flex-start; flex-direction: column; gap: 3px; }
+    .weight-summary { text-align: left; }
+    .excluded-list { grid-template-columns: 1fr; }
+    .method-grid { grid-template-columns: 1fr; }
+    .empty { padding: 30px 18px; }
+  }
+
+  @media (max-width: 430px) {
+    .app {
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+    }
+    .rank-row {
+      grid-template-columns: 30px minmax(0, 1fr) 64px;
+      padding: 13px 12px;
+      gap: 9px 10px;
+    }
+    .rank-no { width: 24px; height: 24px; font-size: 9px; }
+    .ticker { font-size: 8px; }
+    .identity-meta { font-size: 9px; }
+    .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 12px; }
+    .metric-label { font-size: 8px; }
+    .metric-value { font-size: 10.5px; }
+    .score-value { font-size: 15px; }
+    .score-caption { font-size: 7.5px; }
+    .btn { font-size: 11.5px; }
+    .drop-panel { padding: 30px 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" lang="en">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Ng Ping Kee — home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none">
+          <rect x="3" y="13" width="4" height="8" rx="1" fill="var(--cat-growth)"></rect>
+          <rect x="10" y="8" width="4" height="13" rx="1" fill="var(--cat-netnet)"></rect>
+          <rect x="17" y="3" width="4" height="18" rx="1" fill="var(--cat-netgrowth)"></rect>
+        </svg>
+      </span>
+      <span>
+        <span class="brand-eyebrow">Financial gauge</span>
+        <span class="brand-name">Equity Segmenter</span>
+      </span>
+    </a>
+    <div class="top-actions">
+      <span class="status-chip is-sample" id="source-chip">Sample data</span>
+      <button type="button" class="btn btn-ghost" id="reset-sample" title="Discard imported files and restore the bundled dataset" hidden>Reset data</button>
+      <button type="button" class="btn btn-primary" id="import-btn">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true">
+          <path d="M8 10V2.5M8 2.5 5.3 5.2M8 2.5l2.7 2.7M2.5 10.5v1.7c0 .7.6 1.3 1.3 1.3h8.4c.7 0 1.3-.6 1.3-1.3v-1.7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        Import CSV
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="kicker">Screening workbench</p>
+        <h1 id="page-title">Three screens, one stock list.</h1>
+        <p class="lede">Import the CSV from <code>stock_ratios.py</code>, or drop files anywhere on this page. Hard filters decide who qualifies; the weights decide the order. Every ranking is computed in the browser.</p>
+      </div>
+      <aside class="dataset-card" aria-label="Dataset summary">
+        <div class="dataset-top">
+          <span class="dataset-date" id="dataset-date">As of —</span>
+          <span class="kicker">Dataset</span>
+        </div>
+        <div class="dataset-stats">
+          <div class="stat">
+            <strong id="stat-tickers">0</strong>
+            <span>Unique tickers</span>
+          </div>
+          <div class="stat">
+            <strong id="stat-rows">0</strong>
+            <span>Rows read</span>
+          </div>
+        </div>
+        <p class="file-line" id="file-line">Built-in sample</p>
+      </aside>
+    </section>
+
+    <div class="notice" id="notice" role="status" hidden>
+      <span class="notice-text" id="notice-text"></span>
+      <button type="button" class="notice-close" id="notice-close" aria-label="Dismiss message">
+        <svg viewBox="0 0 14 14" width="12" height="12" fill="none" aria-hidden="true">
+          <path d="M3 3l8 8M11 3 3 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="screen-switch" id="screen-tabs" role="tablist" aria-label="Screens"></nav>
+
+    <div class="workspace">
+      <aside class="controls" data-screen="growth" aria-label="Screen settings">
+        <div class="controls-head">
+          <h2>Screen settings</h2>
+          <div class="controls-actions">
+            <button type="button" class="text-btn" id="reset-weights">Reset weights</button>
+            <button type="button" class="text-btn settings-toggle" id="settings-toggle" aria-expanded="true" aria-controls="controls-body">
+              <span id="settings-toggle-label">Hide</span>
+              <svg viewBox="0 0 12 12" width="10" height="10" fill="none" aria-hidden="true">
+                <path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="controls-body" id="controls-body">
+          <div id="screen-controls"></div>
+          <p class="controls-note">Scores are percentiles among this screen's qualified stocks. If a metric is missing, the remaining weights are renormalized for that row.</p>
+        </div>
+      </aside>
+
+      <section class="screen-main" id="screen-panel" role="tabpanel" aria-labelledby="tab-growth">
+        <header class="screen-head">
+          <div>
+            <p class="kicker" id="screen-kicker">Growth screen</p>
+            <h2 id="screen-title">High Growth</h2>
+            <p class="screen-desc" id="screen-desc"></p>
+            <div class="gates" id="screen-gates"></div>
+          </div>
+          <div class="count-block">
+            <strong id="ranked-count">0</strong>
+            <span>Ranked</span>
+            <small id="excluded-count">—</small>
+          </div>
+        </header>
+
+        <div class="list-head">
+          <span class="list-caption" id="list-caption">Composite percentile · highest first</span>
+          <span class="weight-summary" id="weight-summary"></span>
+        </div>
+
+        <ol class="ranking" id="ranking"></ol>
+
+        <div class="empty" id="empty-state" hidden>
+          <div class="empty-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none">
+              <path d="M4 18V7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V18M4 18h16M8 18v-5.5h8V18M9 6V3.8h6V6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+          <h3 id="empty-title">No stocks clear this screen</h3>
+          <p id="empty-copy">Try a different CSV, or open the screen settings to loosen the universe.</p>
+          <div class="empty-actions">
+            <button type="button" class="btn btn-primary" id="empty-import">Import CSV</button>
+            <button type="button" class="btn btn-ghost" id="empty-settings">Adjust screen settings</button>
+          </div>
+        </div>
+
+        <details class="excluded" id="excluded-details" hidden>
+          <summary id="excluded-summary">Excluded</summary>
+          <ul class="excluded-list" id="excluded-list"></ul>
+        </details>
+      </section>
+    </div>
+
+    <details class="method">
+      <summary>How the rankings work</summary>
+      <div class="method-grid">
+        <div>
+          <h3>Composite score</h3>
+          <p>Each metric is converted to a percentile rank from 0 to 100 among the stocks that pass the screen's hard filters. Lower-is-better metrics are reversed. The weighted average is the score you see. Missing metrics are skipped and the remaining weights are renormalized, so a partial record is not treated as a zero. Ties break on the criteria in the order they appear.</p>
+        </div>
+        <div>
+          <h3>Hard filters</h3>
+          <p>High Growth keeps only the growth universe with positive revenue growth on the chosen basis. Net-Growth requires positive shareholder equity growth and a falling 5-year share count. Net-Net has no hard filter. Weights change the order, never the gates.</p>
+        </div>
+        <div>
+          <h3>Data and signs</h3>
+          <p>Share-count growth is positive for dilution and negative for buybacks. This is the yfinance/GARP convention used by the scraper. Imports merge by ticker, keeping the row with the latest <code>As_Of</code>. Files are parsed locally and are never uploaded. Yahoo data can be stale or incomplete; this is not investment advice.</p>
+        </div>
+      </div>
+    </details>
+
+    <footer class="footer">
+      <span>Built for stock_ratios.py exports · Market cap shown in each stock's trading currency.</span>
+      <span>Local-only CSV import · Not investment advice.</span>
+    </footer>
+  </main>
+</div>
+
+<div class="drop-overlay" id="drop-overlay" hidden>
+  <div class="drop-panel">
+    <h2>Drop CSV files</h2>
+    <p>Release to merge them into this screen. Duplicate tickers keep the latest As_Of date.</p>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept=".csv,text/csv" multiple hidden>
+
+<script type="text/csv" id="sample-csv">
+Ticker,Company,Sector,Industry,Currency,Financial_Currency,PE,PB,PS,P_FCF,PEG,Share_Count_Change_5Y_Pct,Share_Count_Period_Yrs,Liquidation_Value,Liquidation_As_Of,Shareholder_Equity_Growth_Pct,Shareholder_Equity_CAGR_Pct,Equity_Growth_Period_Yrs,Revenue_YoY_Growth_Pct,Revenue_CAGR_Pct,Revenue_CAGR_Period_Yrs,Market_Cap,FCF,As_Of,Notes
+PEP,"PepsiCo, Inc.",Consumer Defensive,Beverages - Non-Alcoholic,USD,USD,17.4843,8.5052,1.9281,20.9438,1.5221,-1.44,5.09,-63460500000.0,2026-09-30,18.99,5.97,3.0,2.25,2.83,3.0,189421010944.0,9044249600.0,2026-11-20,
+1211.HK,BYD Company Limited,Consumer Cyclical,Auto Manufacturers,HKD,CNY,15.8376,1.9379,0.7076,,0.4786,4.39,4.45,-493548179166.6,2026-09-30,121.81,30.41,3.0,3.46,23.76,3.0,568913100800.0,-126098076627.08,2026-11-20,non-positive FCF; P/FCF not meaningful; share count split-adjusted (1)
+0700.HK,Tencent Holdings Limited,Communication Services,Internet Content & Information,HKD,CNY,12.1084,2.2913,3.8578,16.0414,1.2104,-6.24,4.96,-378687738100.05,2026-06-30,59.99,16.95,3.0,13.86,10.67,3.0,3097584992256.0,193099845825.34,2026-11-20,
+NFLX,"Netflix, Inc.",Communication Services,Entertainment,USD,USD,16.896,8.1969,4.8267,9.4229,0.9544,-7.49,4.96,-19892438500.0,2026-09-30,28.1,8.6,3.0,15.85,12.64,3.0,240055812096.0,25475807232.0,2026-11-20,share count split-adjusted (1)
+PCG,PG&E Corporation,Utilities,Utilities - Regulated Electric,USD,USD,10.3259,0.9305,1.1911,,0.5727,-2.1,5.01,-60064000000.0,2026-09-30,42.58,12.55,3.0,2.11,4.77,3.0,30701869056.0,-6491624960.0,2026-11-20,non-positive FCF; P/FCF not meaningful
+PDD,PDD Holdings Inc.,Consumer Cyclical,Internet Retail,USD,CNY,9.4818,1.9776,0.2716,10.9455,0.6732,8.4,4.41,36761518794.54,2026-06-30,251.01,51.96,3.0,9.65,48.98,3.0,122412097536.0,11183827208.56,2026-11-20,
+CHTR,"Charter Communications, Inc.",Communication Services,Telecom Services,USD,USD,12.5169,1.3879,0.4285,7.3804,4.9346,-36.16,5.05,-116679000000.0,2026-09-30,76.05,20.74,3.0,-0.56,0.46,3.0,23846084608.0,3231000064.0,2026-11-20,
+0086.HK,Sun Hung Kai & Co. Limited,Financial Services,Credit Services,HKD,HKD,5.4225,0.3319,2.1263,3.6168,0.51,-1.4,5.01,-9489450000.0,2026-06-30,-0.09,-0.03,3.0,51.33,71.07,3.0,7500602368.0,2073800000.0,2026-11-20,
+9988.HK,Alibaba Group Holding Limited,Consumer Cyclical,Internet Retail,HKD,CNY,20.6948,1.2633,1.5884,,0.3782,-10.5,4.96,-359621664658.55,2026-06-30,7.2,2.34,3.0,2.74,5.62,3.0,1659823456256.0,-97040734779.47,2026-11-20,non-positive FCF; P/FCF not meaningful
+EXE,Expand Energy Corporation,Energy,Oil & Gas E&P,USD,USD,7.113,0.9764,1.4703,13.9309,0.8086,77.6,3.0,2117000000.0,2026-09-30,103.62,26.74,3.0,188.77,2.13,3.0,19040124928.0,1366749952.0,2026-11-20,share count from annual balance sheet
+RE4.SI,Geo Energy Resources Limited,Energy,Thermal Coal,SGD,USD,22.75,1.1529,1.6765,21.3661,,24.73,5.0,-360869676.1,2026-06-30,8.67,2.81,3.0,40.0,-8.46,3.0,805108288.0,37681507.98,2026-11-20,
+TME,Tencent Music Entertainment Group,Communication Services,Internet Content & Information,USD,CNY,11.0,1.1953,0.4324,12.2963,0.9533,-5.75,4.82,-808945816.26,2026-09-30,66.92,18.62,3.0,15.85,5.1,3.0,14879755264.0,1210103366.7,2026-11-20,
+DM0.SI,PSC Corporation Ltd.,Consumer Cyclical,Packaging & Containers,SGD,SGD,9.25,0.5754,0.4112,11.446,,-3.87,4.24,125153000.0,2026-06-30,11.76,3.78,3.0,-2.35,-4.8,3.0,201759872.0,17627124.0,2026-11-20,
+MU,"Micron Technology, Inc.",Technology,Semiconductors,USD,USD,9.2888,5.6432,5.8652,26.8076,0.16,1.0,4.95,17579000000.0,2026-08-31,213.64,46.37,3.0,256.33,104.61,3.0,781179879424.0,29140250624.0,2026-11-20,
+ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4084,4.8028,,0.6188,14.05,5.04,-118080000000.0,2026-08-31,3861.6,240.8,3.0,17.35,10.47,3.0,344724963328.0,-45853626368.0,2026-11-20,non-positive FCF; P/FCF not meaningful; equity growth from a low base (3.0y)
+1113.HK,CK Asset Holdings Limited,Real Estate,Real Estate - Development,HKD,HKD,12.9841,0.4294,2.3577,7.1553,0.8389,-3.95,4.19,16615500000.0,2026-06-30,4.34,1.43,3.0,27.25,0.93,3.0,171769118720.0,24005750784.0,2026-11-20,
+</script>
+
+<script id="app-js">
+(function () {
+  "use strict";
+
+  var SAMPLE_FILE = "stocks_finanacials_20112026.csv";
+  // Checked-in snapshot served from /financial-screener/data/. It replaces the
+  // embedded sample when the page is served over HTTP; the embedded copy keeps
+  // the page working offline and when opened straight from disk.
+  var DATASET_PATH = "data/stocks_finanacials_20112026.csv";
+  var SETTINGS_KEY = "equitySegmenter.settings.v1";
+  var DEFAULT_UNIVERSE = "Technology, Semiconductor, Software, Information Technology, Internet Content, Artificial Intelligence, Cloud, Data Center";
+  var SCREEN_ORDER = ["growth", "netNet", "netGrowth"];
+
+  var DEFAULT_SETTINGS = {
+    activeScreen: "growth",
+    growth: {
+      weights: { equity: 40, revenue: 30, peg: 20, ps: 10 },
+      revenueBasis: "yoy",
+      universe: DEFAULT_UNIVERSE
+    },
+    netNet: { weights: { liq: 60, pb: 40 } },
+    netGrowth: { weights: { equity: 40, liq: 30, pb: 20, share: 10 } }
+  };
+
+  var SCREENS = {
+    growth: {
+      name: "High Growth",
+      kicker: "Growth screen",
+      rule: "Tech & internet · revenue > 0",
+      weightKeys: ["equity", "revenue", "peg", "ps"],
+      description: "Technology, internet and semiconductor businesses whose revenue is still expanding. The growth universe and positive revenue are both mandatory.",
+      empty: {
+        title: "No stocks clear the growth screen",
+        copy: "The growth universe or the positive-revenue filter removed every row. Broaden the sector and industry keywords, switch the revenue basis, or import a different CSV."
+      }
+    },
+    netNet: {
+      name: "Net-Net",
+      kicker: "Asset screen",
+      rule: "Any sector · no hard gate",
+      weightKeys: ["liq", "pb"],
+      description: "Any sector. The ranking rewards liquidation value relative to market cap, then a low price-to-book multiple. There are no hard filters.",
+      empty: {
+        title: "No stocks have usable asset data",
+        copy: "This screen needs both a liquidation value and a market cap, plus a positive P/B. Import a CSV exported by stock_ratios.py with those columns."
+      }
+    },
+    netGrowth: {
+      name: "Net-Growth",
+      kicker: "Quality screen",
+      rule: "Buybacks + positive equity growth",
+      weightKeys: ["equity", "liq", "pb", "share"],
+      description: "Companies compounding shareholder equity while shrinking their share count. Positive equity growth and a falling 5-year share count are both required.",
+      empty: {
+        title: "No stocks clear the net-growth screen",
+        copy: "A stock needs positive shareholder equity growth and a negative 5-year share-count change. No row in this dataset meets both conditions."
+      }
+    }
+  };
+
+  var FIELD_ALIASES = {
+    ticker: ["ticker", "symbol", "stock_ticker"],
+    company: ["company", "company_name", "name", "long_name", "short_name"],
+    sector: ["sector"],
+    industry: ["industry"],
+    currency: ["currency"],
+    financialCurrency: ["financial_currency", "reporting_currency"],
+    pe: ["pe", "pe_ratio", "trailing_pe"],
+    pb: ["pb", "price_to_book"],
+    ps: ["ps", "price_to_sales", "price_to_sales_trailing_12_months"],
+    pFcf: ["p_fcf", "pfcf", "price_to_fcf"],
+    peg: ["peg", "peg_ratio", "trailing_peg_ratio"],
+    shareChange: ["share_count_change_5y_pct", "share_count_growth_5y_pct", "share_count_change", "share_count_growth"],
+    sharePeriod: ["share_count_period_yrs", "share_count_period_years"],
+    liquidationValue: ["liquidation_value"],
+    liquidationAsOf: ["liquidation_as_of"],
+    equityGrowth: ["shareholder_equity_growth_pct", "equity_growth_pct", "shareholder_equity_growth"],
+    equityCagr: ["shareholder_equity_cagr_pct", "equity_cagr_pct"],
+    equityPeriod: ["equity_growth_period_yrs", "equity_growth_period_years"],
+    revenueYoy: ["revenue_yoy_growth_pct", "revenue_growth_pct", "revenue_yoy_growth", "revenue_growth"],
+    revenueCagr: ["revenue_cagr_pct", "revenue_cagr"],
+    revenuePeriod: ["revenue_cagr_period_yrs", "revenue_cagr_period_years"],
+    marketCap: ["market_cap", "market_capitalization", "marketcap"],
+    fcf: ["fcf", "free_cash_flow"],
+    asOf: ["as_of", "asof"],
+    notes: ["notes", "note"]
+  };
+
+  var NUMERIC_FIELDS = new Set([
+    "pe", "pb", "ps", "pFcf", "peg", "shareChange", "sharePeriod",
+    "liquidationValue", "equityGrowth", "equityCagr", "equityPeriod",
+    "revenueYoy", "revenueCagr", "revenuePeriod", "marketCap", "fcf"
+  ]);
+
+  var HEADER_TO_FIELD = {};
+  Object.keys(FIELD_ALIASES).forEach(function (field) {
+    FIELD_ALIASES[field].forEach(function (alias) {
+      HEADER_TO_FIELD[normalizeHeader(alias)] = field;
+    });
+    HEADER_TO_FIELD[normalizeHeader(field)] = field;
+  });
+
+  var state = {
+    rows: [],
+    rowsRead: 0,
+    files: [],
+    source: "sample",
+    baseline: null,
+    sampleRows: null,
+    settings: clone(DEFAULT_SETTINGS),
+    noticeTimer: null,
+    settingsSaveTimer: null,
+    universeTimer: null
+  };
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function normalizeHeader(value) {
+    return String(value == null ? "" : value)
+      .replace(/^﻿/, "")
+      .trim()
+      .toLowerCase()
+      .replace(/[%()]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function isNum(value) {
+    return typeof value === "number" && Number.isFinite(value);
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function parseNumber(value) {
+    if (value == null) return null;
+    var text = String(value).trim();
+    if (!text || /^(n\/a|na|null|nil|-|—|–)$/i.test(text)) return null;
+    var negative = /^\(.*\)$/.test(text);
+    if (negative) text = text.slice(1, -1);
+    text = text.replace(/[,\s$€£¥%]/g, "").replace(/[^0-9eE+\-.]/g, "");
+    if (!text) return null;
+    var number = Number(text);
+    if (!Number.isFinite(number)) return null;
+    return negative ? -number : number;
+  }
+
+  function parseCSV(text) {
+    var source = String(text == null ? "" : text).replace(/^﻿/, "");
+    var rows = [];
+    var row = [];
+    var field = "";
+    var quoted = false;
+
+    for (var i = 0; i < source.length; i += 1) {
+      var char = source[i];
+
+      if (quoted) {
+        if (char === '"') {
+          if (source[i + 1] === '"') {
+            field += '"';
+            i += 1;
+          } else {
+            quoted = false;
+          }
+        } else {
+          field += char;
+        }
+        continue;
+      }
+
+      if (char === '"') {
+        quoted = true;
+      } else if (char === ",") {
+        row.push(field);
+        field = "";
+      } else if (char === "\n" || (char === "\r" && source[i + 1] !== "\n")) {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = "";
+        if (char === "\r" && source[i + 1] === "\n") i += 1;
+      } else if (char === "\r") {
+        // Ignore the \r in a \r\n pair; the \n that follows ends the row.
+      } else {
+        field += char;
+      }
+    }
+
+    if (field.length > 0 || row.length > 0) {
+      row.push(field);
+      rows.push(row);
+    }
+
+    return rows.filter(function (candidate) {
+      return candidate.some(function (cell) { return String(cell).trim() !== ""; });
+    });
+  }
+
+  function parseCSVData(text, fileName) {
+    var matrix = parseCSV(text);
+    if (matrix.length < 2) {
+      throw new Error("No data rows found. Expected a header row plus ticker rows.");
+    }
+
+    var headers = matrix[0].map(normalizeHeader);
+    var tickerIndex = -1;
+    var mapping = {};
+
+    headers.forEach(function (header, index) {
+      var field = HEADER_TO_FIELD[header];
+      if (field) mapping[field] = index;
+      if (field === "ticker" && tickerIndex < 0) tickerIndex = index;
+    });
+
+    if (tickerIndex < 0) {
+      throw new Error("No Ticker column found. Export the file from stock_ratios.py.");
+    }
+
+    var rows = [];
+    for (var r = 1; r < matrix.length; r += 1) {
+      var cells = matrix[r];
+      if (!cells || cells.length === 0) continue;
+
+      var row = {};
+      Object.keys(mapping).forEach(function (field) {
+        var raw = cells[mapping[field]];
+        if (NUMERIC_FIELDS.has(field)) {
+          row[field] = parseNumber(raw);
+        } else {
+          row[field] = String(raw == null ? "" : raw).trim();
+        }
+      });
+
+      if (!row.ticker) continue;
+      row.ticker = row.ticker.toUpperCase();
+      row.company = row.company || row.ticker;
+      row.sector = row.sector || "Unclassified";
+      row.industry = row.industry || "Unclassified";
+      row.currency = row.currency ? row.currency.toUpperCase() : "";
+      row.financialCurrency = row.financialCurrency ? row.financialCurrency.toUpperCase() : "";
+      row.notes = row.notes || "";
+      row.sourceFile = fileName;
+      rows.push(row);
+    }
+
+    if (!rows.length) {
+      throw new Error("The Ticker column is empty.");
+    }
+    return rows;
+  }
+
+  function compareAsOf(a, b) {
+    var av = Date.parse(a && a.asOf ? a.asOf : "");
+    var bv = Date.parse(b && b.asOf ? b.asOf : "");
+    if (!Number.isFinite(av) && !Number.isFinite(bv)) return 0;
+    if (!Number.isFinite(av)) return -1;
+    if (!Number.isFinite(bv)) return 1;
+    return av - bv;
+  }
+
+  function mergeRows(base, incoming) {
+    var map = new Map();
+    var duplicates = 0;
+
+    function absorb(row) {
+      var key = String(row.ticker || "").toUpperCase();
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, row);
+        return;
+      }
+      duplicates += 1;
+      if (compareAsOf(row, map.get(key)) >= 0) {
+        map.set(key, row);
+      }
+    }
+
+    base.forEach(absorb);
+    incoming.forEach(absorb);
+    return { rows: Array.from(map.values()), duplicates: duplicates };
+  }
+
+  function detectMissing(rows) {
+    var missing = [];
+    var has = function (field) {
+      return rows.some(function (row) { return isNum(row[field]); });
+    };
+    if (!has("revenueYoy") && !has("revenueCagr")) missing.push("Revenue growth");
+    if (!has("equityGrowth")) missing.push("Shareholder equity growth");
+    if (!has("shareChange")) missing.push("Share count growth");
+    if (!has("liquidationValue") || !has("marketCap")) missing.push("Liquidation value / market cap");
+    if (!has("pb")) missing.push("P/B");
+    return missing;
+  }
+
+  function parseKeywords(text) {
+    return String(text || "")
+      .split(",")
+      .map(function (keyword) { return keyword.trim(); })
+      .filter(Boolean);
+  }
+
+  function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function matchesUniverse(row, keywords) {
+    if (!keywords.length) return true;
+    var haystack = ((row.sector || "") + " " + (row.industry || "")).toLowerCase();
+    return keywords.some(function (keyword) {
+      var term = keyword.toLowerCase();
+      if (!term) return false;
+      if (term.length <= 3) {
+        return new RegExp("(?:^|[^a-z0-9])" + escapeRegExp(term) + "(?=$|[^a-z0-9])", "i").test(haystack);
+      }
+      return haystack.indexOf(term) !== -1;
+    });
+  }
+
+  function liquidationRatio(row) {
+    if (!isNum(row.liquidationValue) || !isNum(row.marketCap) || row.marketCap <= 0) {
+      return null;
+    }
+    return row.liquidationValue / row.marketCap;
+  }
+
+  function buildCriteria(screen, settings) {
+    var equity = {
+      key: "equity",
+      label: "Equity growth",
+      short: "Eq",
+      controlLabel: "Equity growth",
+      value: function (row) { return row.equityGrowth; },
+      period: function (row) { return row.equityPeriod; },
+      dir: "high",
+      format: "pct",
+      hint: "Higher is better"
+    };
+
+    var liquid = {
+      key: "liq",
+      label: "Liq. / mkt cap",
+      short: "Liq",
+      controlLabel: "Liquidation value / market cap",
+      value: liquidationRatio,
+      dir: "high",
+      format: "ratio",
+      hint: "Higher is better",
+      detail: function (row) {
+        var value = fmtMoney(row.liquidationValue, row.currency) || "—";
+        var cap = fmtMoney(row.marketCap, row.currency) || "—";
+        return "Liquidation " + value + " ÷ market cap " + cap;
+      }
+    };
+
+    var pb = {
+      key: "pb",
+      label: "P/B",
+      short: "P/B",
+      controlLabel: "Price / book",
+      value: function (row) { return row.pb; },
+      dir: "low",
+      format: "multiple",
+      hint: "Lower is better · positive values only",
+      valid: function (value) { return value > 0; }
+    };
+
+    if (screen === "growth") {
+      var useCagr = settings.growth.revenueBasis === "cagr";
+      return [
+        equity,
+        {
+          key: "revenue",
+          label: useCagr ? "Revenue CAGR" : "Revenue YoY",
+          short: "Rev",
+          controlLabel: "Revenue growth",
+          value: function (row) { return useCagr ? row.revenueCagr : row.revenueYoy; },
+          period: useCagr ? function (row) { return row.revenuePeriod; } : null,
+          dir: "high",
+          format: "pct",
+          hint: "Must be positive · higher is better"
+        },
+        {
+          key: "peg",
+          label: "PEG",
+          short: "PEG",
+          controlLabel: "PEG",
+          value: function (row) { return row.peg; },
+          dir: "low",
+          format: "multiple",
+          hint: "Lower is better · positive values only",
+          valid: function (value) { return value > 0; }
+        },
+        {
+          key: "ps",
+          label: "P/S",
+          short: "P/S",
+          controlLabel: "Price / sales",
+          value: function (row) { return row.ps; },
+          dir: "low",
+          format: "multiple",
+          hint: "Lower is better · positive values only",
+          valid: function (value) { return value > 0; }
+        }
+      ];
+    }
+
+    if (screen === "netNet") {
+      return [liquid, pb];
+    }
+
+    return [
+      equity,
+      liquid,
+      pb,
+      {
+        key: "share",
+        label: "5Y shares",
+        short: "Shares",
+        controlLabel: "5-year share count",
+        value: function (row) { return row.shareChange; },
+        period: function (row) { return row.sharePeriod; },
+        dir: "low",
+        format: "share",
+        hint: "Lower is better · negative means buyback"
+      }
+    ];
+  }
+
+  function valueOf(criterion, row) {
+    return criterion.value(row);
+  }
+
+  function validValue(criterion, value) {
+    if (!isNum(value)) return false;
+    if (criterion.valid) return criterion.valid(value);
+    return true;
+  }
+
+  function gateReasons(screen, row, settings) {
+    var reasons = [];
+
+    if (screen === "growth") {
+      var useCagr = settings.growth.revenueBasis === "cagr";
+      var revenue = useCagr ? row.revenueCagr : row.revenueYoy;
+      var label = useCagr ? "Revenue CAGR" : "Revenue YoY";
+      if (!isNum(revenue)) {
+        reasons.push(label + " unavailable");
+      } else if (!(revenue > 0)) {
+        reasons.push(label + " is not positive");
+      }
+    }
+
+    if (screen === "netGrowth") {
+      if (!isNum(row.equityGrowth)) {
+        reasons.push("Equity growth unavailable");
+      } else if (!(row.equityGrowth > 0)) {
+        reasons.push("Equity growth is not positive");
+      }
+      if (!isNum(row.shareChange)) {
+        reasons.push("Share count unavailable");
+      } else if (!(row.shareChange < 0)) {
+        reasons.push("Share count is not shrinking");
+      }
+    }
+
+    return reasons;
+  }
+
+  function percentileScores(rows, criterion) {
+    var items = [];
+    rows.forEach(function (row) {
+      var value = valueOf(criterion, row);
+      if (validValue(criterion, value)) items.push({ row: row, value: value });
+    });
+
+    items.sort(function (a, b) { return a.value - b.value; });
+
+    var scores = new Map();
+    var count = items.length;
+    var i = 0;
+
+    while (i < count) {
+      var j = i;
+      while (j + 1 < count && items[j + 1].value === items[i].value) j += 1;
+      var percentile = count === 1 ? 50 : (((i + j) / 2) / (count - 1)) * 100;
+      var score = criterion.dir === "low" ? 100 - percentile : percentile;
+      for (var k = i; k <= j; k += 1) scores.set(items[k].row, score);
+      i = j + 1;
+    }
+
+    return scores;
+  }
+
+  function evaluateScreen(screen, rows, settings) {
+    var displayCriteria = buildCriteria(screen, settings);
+    var weights = settings[screen].weights;
+    var activePairs = displayCriteria.map(function (criterion) {
+      return { criterion: criterion, raw: clamp(Number(weights[criterion.key]) || 0, 0, 100) };
+    });
+
+    var nonZero = activePairs.filter(function (pair) { return pair.raw > 0; });
+    var usingEqual = nonZero.length === 0;
+    var active = usingEqual
+      ? displayCriteria.map(function (criterion) { return { criterion: criterion, raw: 1 }; })
+      : nonZero;
+    var rawTotal = active.reduce(function (sum, pair) { return sum + pair.raw; }, 0);
+
+    var activeByKey = {};
+    active.forEach(function (pair) {
+      pair.effective = pair.raw / rawTotal;
+      activeByKey[pair.criterion.key] = pair;
+    });
+
+    var universeKeywords = screen === "growth" ? parseKeywords(settings.growth.universe) : [];
+    var candidates = [];
+    var excluded = [];
+    var outside = 0;
+
+    rows.forEach(function (row) {
+      if (screen === "growth" && !matchesUniverse(row, universeKeywords)) {
+        outside += 1;
+        return;
+      }
+
+      var reasons = gateReasons(screen, row, settings);
+      if (reasons.length) {
+        excluded.push({ row: row, reason: reasons.join("; ") });
+        return;
+      }
+
+      var usable = active.some(function (pair) {
+        return validValue(pair.criterion, valueOf(pair.criterion, row));
+      });
+      if (!usable) {
+        excluded.push({ row: row, reason: "No usable metric for the weighted score" });
+        return;
+      }
+
+      candidates.push(row);
+    });
+
+    var scoreMaps = {};
+    active.forEach(function (pair) {
+      scoreMaps[pair.criterion.key] = percentileScores(candidates, pair.criterion);
+    });
+
+    var ranked = candidates.map(function (row) {
+      var weighted = 0;
+      var usedWeight = 0;
+      var components = displayCriteria.map(function (criterion) {
+        var raw = valueOf(criterion, row);
+        var activePair = activeByKey[criterion.key];
+        var score = activePair && validValue(criterion, raw)
+          ? scoreMaps[criterion.key].get(row)
+          : null;
+        var weight = activePair ? activePair.effective : 0;
+        if (score != null) {
+          weighted += score * weight;
+          usedWeight += weight;
+        }
+        return {
+          key: criterion.key,
+          label: criterion.label,
+          raw: raw,
+          score: score == null ? null : score,
+          weight: weight,
+          active: Boolean(activePair),
+          valid: validValue(criterion, raw)
+        };
+      });
+
+      var score = usedWeight > 0 ? weighted / usedWeight : null;
+      var coverage = rawTotal > 0 ? usedWeight : 0;
+      return {
+        row: row,
+        score: score,
+        coverage: coverage,
+        components: components
+      };
+    }).filter(function (entry) {
+      return entry.score != null;
+    }).sort(function (a, b) {
+      var diff = b.score - a.score;
+      if (Math.abs(diff) > 0.00001) return diff;
+
+      // Equal composites follow the priority order of the criteria.
+      for (var i = 0; i < displayCriteria.length; i += 1) {
+        var aScore = a.components[i] ? a.components[i].score : null;
+        var bScore = b.components[i] ? b.components[i].score : null;
+        if (aScore != null && bScore != null && Math.abs(aScore - bScore) > 0.00001) {
+          return bScore - aScore;
+        }
+      }
+
+      if (Math.abs(b.coverage - a.coverage) > 0.00001) return b.coverage - a.coverage;
+      return String(a.row.company || a.row.ticker).localeCompare(String(b.row.company || b.row.ticker));
+    });
+
+    return {
+      screen: screen,
+      displayCriteria: displayCriteria,
+      activeKeys: new Set(active.map(function (pair) { return pair.criterion.key; })),
+      effectiveWeights: active.reduce(function (map, pair) {
+        map[pair.criterion.key] = pair.effective;
+        return map;
+      }, {}),
+      ranked: ranked,
+      excluded: excluded,
+      outside: outside,
+      usingEqual: usingEqual,
+      universeKeywords: universeKeywords
+    };
+  }
+
+  function latestAsOf(rows) {
+    var best = "";
+    var bestValue = -Infinity;
+    rows.forEach(function (row) {
+      var value = Date.parse(row.asOf || "");
+      if (Number.isFinite(value) && value > bestValue) {
+        bestValue = value;
+        best = row.asOf;
+      }
+    });
+    return best;
+  }
+
+  function fmtPct(value, alwaysSign) {
+    if (!isNum(value)) return "—";
+    var sign = value > 0 && alwaysSign ? "+" : "";
+    return sign + value.toFixed(1) + "%";
+  }
+
+  function fmtMultiple(value) {
+    if (!isNum(value)) return "—";
+    return value.toFixed(2) + "×";
+  }
+
+  function fmtRatio(value) {
+    if (!isNum(value)) return "—";
+    return fmtPct(value * 100, false);
+  }
+
+  function fmtMoney(value, currency) {
+    if (!isNum(value)) return null;
+    var abs = Math.abs(value);
+    var unit = "";
+    var scale = 1;
+    if (abs >= 1e12) { unit = "T"; scale = 1e12; }
+    else if (abs >= 1e9) { unit = "B"; scale = 1e9; }
+    else if (abs >= 1e6) { unit = "M"; scale = 1e6; }
+    else if (abs >= 1e3) { unit = "K"; scale = 1e3; }
+    var amount = value / scale;
+    var digits = Math.abs(amount) >= 100 ? 0 : 1;
+    return (currency ? currency + " " : "") + amount.toFixed(digits) + unit;
+  }
+
+  function fmtPeriod(value) {
+    return isNum(value) && value > 0 ? value.toFixed(1) + "y" : "";
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+    });
+  }
+
+  function metricDisplay(criterion, value) {
+    if (!isNum(value)) return { text: "—", tone: "" };
+    if (criterion.format === "pct") {
+      return { text: fmtPct(value, true), tone: value > 0 ? "pos" : value < 0 ? "neg" : "" };
+    }
+    if (criterion.format === "share") {
+      return { text: fmtPct(value, true), tone: value > 0 ? "neg" : value < 0 ? "pos" : "" };
+    }
+    if (criterion.format === "ratio") {
+      return { text: fmtRatio(value), tone: value > 0 ? "pos" : "" };
+    }
+    return { text: fmtMultiple(value), tone: "" };
+  }
+
+  function gateChips(screen, settings) {
+    if (screen === "growth") {
+      var basis = settings.growth.revenueBasis === "cagr" ? "CAGR" : "YoY";
+      return ["Growth universe", "Revenue " + basis + " > 0"];
+    }
+    if (screen === "netNet") return ["Any sector", "No hard filter"];
+    return ["Equity growth > 0", "5Y share change < 0"];
+  }
+
+  function weightSummary(result) {
+    return result.displayCriteria.filter(function (criterion) {
+      return result.activeKeys.has(criterion.key);
+    }).map(function (criterion) {
+      var percent = Math.round((result.effectiveWeights[criterion.key] || 0) * 100);
+      return criterion.short + " " + percent + "%";
+    }).join(" · ");
+  }
+
+  function countSubline(result) {
+    var parts = [];
+    if (result.outside > 0) parts.push(result.outside + " outside universe");
+    if (result.excluded.length > 0) parts.push(result.excluded.length + " filtered");
+    if (result.usingEqual) parts.push("equal weights");
+    if (!parts.length) {
+      parts.push(result.screen === "netNet" ? "No hard filter" : "All rows eligible");
+    }
+    return parts.join(" · ");
+  }
+
+  function metricTitle(criterion, value, component, period, row) {
+    if (!component.active) return criterion.label + ": weight set to 0 — not in the score.";
+    if (!isNum(value)) return criterion.label + ": not available.";
+    var shown = metricDisplay(criterion, value).text;
+    var periodText = fmtPeriod(period);
+    var detail = criterion.detail ? " · " + criterion.detail(row) : "";
+    var prefix = criterion.label + ": " + shown + (periodText ? " (" + periodText + ")" : "");
+    if (!component.valid) return prefix + " — not scored for this metric (" + criterion.hint + ").";
+    return prefix + detail + " · " + criterion.hint + (component.score == null ? "" : " · percentile " + component.score.toFixed(0));
+  }
+
+  function rowHtml(entry, index, result) {
+    var row = entry.row;
+    var isLeader = index === 0;
+    var marker = String(index + 1).padStart(2, "0");
+    var metrics = result.displayCriteria.map(function (criterion) {
+      var component = entry.components.find(function (item) { return item.key === criterion.key; });
+      var value = component ? component.raw : null;
+      var display = metricDisplay(criterion, value);
+      var period = criterion.period ? criterion.period(row) : null;
+      var width = component && component.score != null ? clamp(component.score, 0, 100) : 0;
+      var inactive = component && !component.active;
+      var periodText = fmtPeriod(period);
+      return '<div class="metric' + (inactive ? " is-inactive" : "") + '" title="' + esc(metricTitle(criterion, value, component, period, row)) + '">' +
+        '<div class="metric-label">' + esc(criterion.label) + '<span class="dir" aria-hidden="true">' + (criterion.dir === "low" ? "↓" : "↑") + "</span></div>" +
+        '<div class="metric-value ' + display.tone + '">' + esc(display.text) +
+          (periodText ? '<span class="period">' + esc(periodText) + "</span>" : "") +
+        "</div>" +
+        '<div class="metric-bar" aria-hidden="true"><span style="width:' + width.toFixed(1) + '%"></span></div>' +
+      "</div>";
+    }).join("");
+
+    var coverage = entry.coverage < 0.995
+      ? '<div class="coverage" title="Share of the active weight with usable data">' + Math.round(entry.coverage * 100) + "% data</div>"
+      : "";
+
+    var metaBits = [row.sector || "Unclassified", row.industry || "Unclassified"];
+    var money = fmtMoney(row.marketCap, row.currency);
+    if (money) metaBits.push(money);
+    var noteFlag = row.notes
+      ? '<span class="note-flag" role="img" title="' + esc(row.notes) + '" aria-label="Data note: ' + esc(row.notes) + '">i</span>'
+      : "";
+
+    return '<li class="rank-row' + (isLeader ? " is-leader" : "") + '">' +
+      '<div class="rank-no" aria-label="Rank ' + (index + 1) + '">' + marker + "</div>" +
+      '<div class="identity">' +
+        '<div class="company-line"><h3>' + esc(row.company || row.ticker) + '</h3><span class="ticker">' + esc(row.ticker) + "</span>" + noteFlag + "</div>" +
+        '<p class="identity-meta">' + metaBits.map(esc).join(" / ") + "</p>" +
+      "</div>" +
+      '<div class="metrics" style="--cols:' + result.displayCriteria.length + '">' + metrics + "</div>" +
+      '<div class="score-cell">' +
+        '<div class="score-value">' + entry.score.toFixed(1) + "</div>" +
+        '<div class="score-caption">Score / 100</div>' +
+        '<div class="score-bar" aria-hidden="true"><span style="width:' + clamp(entry.score, 0, 100).toFixed(1) + '%"></span></div>' +
+        coverage +
+      "</div>" +
+    "</li>";
+  }
+
+  function emptyCopy(result) {
+    var config = SCREENS[result.screen];
+    var copy = config.empty.copy;
+    if (result.screen === "growth") {
+      if (state.rows.length > 0 && result.outside === state.rows.length) {
+        copy = "Every row sits outside the current growth universe. Broaden the sector or industry keywords in screen settings to bring more names into view.";
+      } else if (result.excluded.length > 0 && result.ranked.length === 0) {
+        copy = "The growth universe was not the blocker. No row has positive revenue growth on the selected basis. Switch to the other basis or import a newer CSV.";
+      }
+    }
+    return copy;
+  }
+
+  function renderTabs(results) {
+    SCREEN_ORDER.forEach(function (key) {
+      var count = document.getElementById("tab-count-" + key);
+      if (count) count.textContent = String(results[key].ranked.length);
+      var tab = document.getElementById("tab-" + key);
+      var active = key === state.settings.activeScreen;
+      if (tab) {
+        tab.classList.toggle("is-active", active);
+        tab.setAttribute("aria-selected", active ? "true" : "false");
+        tab.tabIndex = active ? 0 : -1;
+      }
+    });
+  }
+
+  function renderScreen(result) {
+    var screen = result.screen;
+    var config = SCREENS[screen];
+    var panel = document.getElementById("screen-panel");
+
+    panel.dataset.screen = screen;
+    panel.setAttribute("aria-labelledby", "tab-" + screen);
+
+    document.getElementById("screen-kicker").textContent = config.kicker;
+    document.getElementById("screen-title").textContent = config.name;
+    document.getElementById("screen-desc").textContent = config.description;
+    document.getElementById("screen-gates").innerHTML = gateChips(screen, state.settings)
+      .map(function (chip) { return '<span class="gate">' + esc(chip) + "</span>"; })
+      .join("");
+
+    document.getElementById("ranked-count").textContent = String(result.ranked.length);
+    document.getElementById("excluded-count").textContent = countSubline(result);
+
+    var basisLabel = screen === "growth"
+      ? " · revenue " + (state.settings.growth.revenueBasis === "cagr" ? "CAGR" : "YoY")
+      : "";
+    document.getElementById("list-caption").textContent = "Composite percentile" + basisLabel + " · highest first";
+    document.getElementById("weight-summary").textContent = weightSummary(result);
+
+    var ranking = document.getElementById("ranking");
+    var empty = document.getElementById("empty-state");
+
+    if (result.ranked.length === 0) {
+      ranking.hidden = true;
+      ranking.innerHTML = "";
+      empty.hidden = false;
+      document.getElementById("empty-title").textContent = config.empty.title;
+      document.getElementById("empty-copy").textContent = emptyCopy(result);
+    } else {
+      empty.hidden = true;
+      ranking.hidden = false;
+      ranking.innerHTML = result.ranked.map(function (entry, index) {
+        return rowHtml(entry, index, result);
+      }).join("");
+    }
+
+    var details = document.getElementById("excluded-details");
+    var excludedList = document.getElementById("excluded-list");
+    if (result.excluded.length === 0) {
+      details.hidden = true;
+      excludedList.innerHTML = "";
+    } else {
+      details.hidden = false;
+      document.getElementById("excluded-summary").textContent =
+        result.excluded.length + (result.excluded.length === 1 ? " row excluded by the screen rules" : " rows excluded by the screen rules");
+      excludedList.innerHTML = result.excluded.slice().sort(function (a, b) {
+        return String(a.row.ticker).localeCompare(String(b.row.ticker));
+      }).map(function (item) {
+        return "<li><strong>" + esc(item.row.ticker) + "</strong> " + esc(item.row.company) + " — " + esc(item.reason) + "</li>";
+      }).join("");
+    }
+  }
+
+  function updateDatasetUI() {
+    var chip = document.getElementById("source-chip");
+    var asOf = latestAsOf(state.rows);
+    var sample = state.source === "sample";
+    var dataset = state.source === "dataset";
+
+    chip.textContent = sample ? "Sample data" : dataset ? "Bundled dataset" : "Imported";
+    chip.className = "status-chip " + (state.source === "imported" ? "is-imported" : "is-sample");
+    document.getElementById("dataset-date").textContent = asOf ? "As of " + asOf : "As of —";
+    document.getElementById("stat-tickers").textContent = String(state.rows.length);
+    document.getElementById("stat-rows").textContent = String(state.rowsRead);
+    document.getElementById("reset-sample").hidden = sample;
+
+    var line;
+    if (sample) {
+      line = "Built-in sample · " + SAMPLE_FILE;
+    } else if (dataset) {
+      line = "Bundled dataset · " + state.files.join(" · ");
+    } else if (state.files.length) {
+      line = state.files.length + (state.files.length === 1 ? " file · " : " files · ") + state.files.join(" · ");
+    } else {
+      line = "Imported data";
+    }
+    var fileLine = document.getElementById("file-line");
+    fileLine.textContent = line;
+    fileLine.title = line;
+  }
+
+  function effectiveWeightsFor(screen) {
+    var criteria = buildCriteria(screen, state.settings);
+    var raw = state.settings[screen].weights;
+    var pairs = criteria.map(function (criterion) {
+      return { criterion: criterion, raw: clamp(Number(raw[criterion.key]) || 0, 0, 100) };
+    });
+    var nonZero = pairs.filter(function (pair) { return pair.raw > 0; });
+    var active = nonZero.length ? nonZero : pairs;
+    var total = active.reduce(function (sum, pair) { return sum + pair.raw; }, 0);
+    return {
+      weights: active.reduce(function (map, pair) {
+        map[pair.criterion.key] = total ? pair.raw / total : 0;
+        return map;
+      }, {}),
+      active: new Set(active.map(function (pair) { return pair.criterion.key; })),
+      usingEqual: nonZero.length === 0
+    };
+  }
+
+  function updateWeightOutputs() {
+    var screen = state.settings.activeScreen;
+    var info = effectiveWeightsFor(screen);
+    var criteria = buildCriteria(screen, state.settings);
+    var raw = state.settings[screen].weights;
+
+    criteria.forEach(function (criterion) {
+      var input = document.getElementById("weight-" + criterion.key);
+      var output = document.getElementById("weight-out-" + criterion.key);
+      var rawLabel = document.getElementById("weight-raw-" + criterion.key);
+      if (!input) return;
+      var value = clamp(Number(raw[criterion.key]) || 0, 0, 100);
+      var percent = info.weights[criterion.key] || 0;
+      input.value = String(value);
+      input.style.setProperty("--pct", value + "%");
+      if (output) output.textContent = Math.round(percent * 100) + "%";
+      if (rawLabel) rawLabel.textContent = "raw " + Math.round(value);
+      input.setAttribute("aria-valuetext", Math.round(value) + " raw weight, " + Math.round(percent * 100) + " percent of score");
+    });
+
+    var warning = document.getElementById("weight-warning");
+    if (warning) warning.hidden = !info.usingEqual;
+  }
+
+  function renderControls() {
+    var screen = state.settings.activeScreen;
+    var settings = state.settings[screen];
+    var criteria = buildCriteria(screen, state.settings);
+    var html = "";
+
+    if (screen === "growth") {
+      html += '<div class="field">' +
+        '<div class="field-label"><label for="universe-input">Growth universe</label><button type="button" class="text-btn" id="reset-universe">Reset</button></div>' +
+        '<textarea id="universe-input" rows="4" spellcheck="false" aria-describedby="universe-hint">' + esc(settings.universe) + "</textarea>" +
+        '<p class="hint" id="universe-hint">Matches Sector or Industry, case-insensitive. Separate keywords with commas. Clear the field to include every sector.</p>' +
+      "</div>" +
+      '<div class="field">' +
+        '<div class="field-label" id="basis-label">Revenue growth basis</div>' +
+        '<div class="segmented" role="group" aria-labelledby="basis-label">' +
+          '<button type="button" data-basis="yoy" aria-pressed="' + (settings.revenueBasis === "yoy" ? "true" : "false") + '">Latest YoY</button>' +
+          '<button type="button" data-basis="cagr" aria-pressed="' + (settings.revenueBasis === "cagr" ? "true" : "false") + '">CAGR</button>' +
+        "</div>" +
+        '<p class="hint">The chosen measure must be positive to enter the screen.</p>' +
+      "</div>";
+    }
+
+    html += '<div class="field">' +
+      '<div class="field-label">Ranking weights</div>' +
+      '<div class="weights">' +
+      criteria.map(function (criterion) {
+        var value = clamp(Number(settings.weights[criterion.key]) || 0, 0, 100);
+        return '<div class="weight">' +
+          '<div class="weight-top"><label for="weight-' + criterion.key + '">' + esc(criterion.controlLabel) + '</label><output id="weight-out-' + criterion.key + '" for="weight-' + criterion.key + '">0%</output></div>' +
+          '<div class="weight-meta"><span>' + esc(criterion.hint) + '</span><span id="weight-raw-' + criterion.key + '">raw ' + Math.round(value) + "</span></div>" +
+          '<input type="range" id="weight-' + criterion.key + '" data-weight="' + criterion.key + '" min="0" max="100" step="1" value="' + value + '" style="--pct:' + value + '%;" aria-label="' + esc(criterion.controlLabel) + ' weight">' +
+        "</div>";
+      }).join("") +
+      "</div>" +
+      '<p class="weight-warning" id="weight-warning" hidden>All weights are zero. Equal weighting is being used.</p>' +
+      '<p class="hint">Sliders set relative emphasis. The percentage is the effective share of the score after normalization.</p>' +
+    "</div>";
+
+    document.getElementById("screen-controls").innerHTML = html;
+    document.querySelector(".controls").dataset.screen = screen;
+    updateWeightOutputs();
+  }
+
+  function computeResults() {
+    var results = {};
+    SCREEN_ORDER.forEach(function (key) {
+      results[key] = evaluateScreen(key, state.rows, state.settings);
+    });
+    return results;
+  }
+
+  function renderAll(options) {
+    var opts = options || {};
+    var results = computeResults();
+    updateDatasetUI();
+    renderTabs(results);
+    renderScreen(results[state.settings.activeScreen]);
+    if (opts.rebuildControls) renderControls();
+    else updateWeightOutputs();
+  }
+
+  function switchScreen(key, focusTab) {
+    if (!SCREENS[key] || key === state.settings.activeScreen) {
+      if (focusTab) {
+        var self = document.getElementById("tab-" + key);
+        if (self) self.focus();
+      }
+      return;
+    }
+    state.settings.activeScreen = key;
+    saveSettings();
+    renderAll({ rebuildControls: true });
+    if (focusTab) {
+      var tab = document.getElementById("tab-" + key);
+      if (tab) tab.focus();
+    }
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+    } catch (error) {
+      // Settings are a convenience; the page works without storage.
+    }
+  }
+
+  function scheduleSaveSettings() {
+    clearTimeout(state.settingsSaveTimer);
+    state.settingsSaveTimer = setTimeout(saveSettings, 350);
+  }
+
+  function loadSettings() {
+    var loaded = clone(DEFAULT_SETTINGS);
+    try {
+      var raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return loaded;
+      var saved = JSON.parse(raw);
+      if (!saved || typeof saved !== "object") return loaded;
+
+      if (SCREENS[saved.activeScreen]) loaded.activeScreen = saved.activeScreen;
+
+      SCREEN_ORDER.forEach(function (screen) {
+        var source = saved[screen];
+        if (!source || typeof source !== "object") return;
+        var keys = SCREENS[screen].weightKeys;
+        if (source.weights && typeof source.weights === "object") {
+          keys.forEach(function (key) {
+            var value = Number(source.weights[key]);
+            if (Number.isFinite(value)) loaded[screen].weights[key] = clamp(Math.round(value), 0, 100);
+          });
+        }
+        if (screen === "growth") {
+          if (source.revenueBasis === "yoy" || source.revenueBasis === "cagr") {
+            loaded.growth.revenueBasis = source.revenueBasis;
+          }
+          if (typeof source.universe === "string" && source.universe.length <= 600) {
+            loaded.growth.universe = source.universe;
+          }
+        }
+      });
+    } catch (error) {
+      return clone(DEFAULT_SETTINGS);
+    }
+    return loaded;
+  }
+
+  function buildTabs() {
+    var host = document.getElementById("screen-tabs");
+    host.innerHTML = SCREEN_ORDER.map(function (key) {
+      var config = SCREENS[key];
+      return '<button type="button" role="tab" id="tab-' + key + '" class="screen-tab" data-screen="' + key + '" aria-controls="screen-panel" aria-selected="false" tabindex="-1">' +
+        '<span class="tab-dot" aria-hidden="true"></span>' +
+        '<span class="tab-name">' + esc(config.name) + "</span>" +
+        '<span class="tab-count" id="tab-count-' + key + '">0</span>' +
+        '<span class="tab-rule">' + esc(config.rule) + "</span>" +
+      "</button>";
+    }).join("");
+  }
+
+  function showNotice(message, tone, persist) {
+    clearTimeout(state.noticeTimer);
+    var notice = document.getElementById("notice");
+    document.getElementById("notice-text").textContent = message;
+    notice.dataset.tone = tone || "success";
+    notice.hidden = false;
+    if (!persist) {
+      state.noticeTimer = setTimeout(function () {
+        notice.hidden = true;
+      }, 7500);
+    }
+  }
+
+  function readFile(file) {
+    if (file && typeof file.text === "function") return file.text();
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(String(reader.result || "")); };
+      reader.onerror = function () { reject(new Error("Could not read the file.")); };
+      reader.readAsText(file);
+    });
+  }
+
+  async function handleFiles(fileList) {
+    var files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    var allRows = [];
+    var sources = [];
+    var errors = [];
+
+    for (var i = 0; i < files.length; i += 1) {
+      var file = files[i];
+      try {
+        var text = await readFile(file);
+        var rows = parseCSVData(text, file.name);
+        allRows = allRows.concat(rows);
+        sources.push(file.name);
+      } catch (error) {
+        errors.push(file.name + ": " + error.message);
+      }
+    }
+
+    if (!allRows.length) {
+      showNotice(errors.join(" ") || "No readable rows were found.", "error", true);
+      return;
+    }
+
+    // An import replaces the baseline the page started with (embedded sample or
+    // bundled dataset); later imports merge into the imported rows.
+    var wasBaseline = state.source !== "imported";
+    var merged = mergeRows(wasBaseline ? [] : state.rows, allRows);
+    state.rows = merged.rows;
+    state.rowsRead = (wasBaseline ? 0 : state.rowsRead) + allRows.length;
+    state.files = Array.from(new Set((wasBaseline ? [] : state.files).concat(sources)));
+    state.source = "imported";
+
+    var missing = detectMissing(state.rows);
+    renderAll();
+
+    var message = "Imported " + allRows.length + (allRows.length === 1 ? " row" : " rows") +
+      " from " + sources.length + (sources.length === 1 ? " file" : " files") +
+      ". " + state.rows.length + " unique ticker" + (state.rows.length === 1 ? "" : "s") + " in view.";
+    if (merged.duplicates) {
+      message += " " + merged.duplicates + " duplicate ticker row" + (merged.duplicates === 1 ? "" : "s") + " merged with the latest As_Of.";
+    }
+    if (missing.length) {
+      message += " Missing columns: " + missing.join(", ") + ".";
+    }
+    if (errors.length) {
+      message = errors.join(" ") + " " + message;
+      showNotice(message, "warn", true);
+    } else if (missing.length) {
+      showNotice(message, "warn", true);
+    } else {
+      showNotice(message, "success", false);
+    }
+  }
+
+  function resetToSample() {
+    var baseline = state.baseline || { rows: state.sampleRows, source: "sample", files: [] };
+    state.rows = baseline.rows.slice();
+    state.rowsRead = baseline.rows.length;
+    state.files = baseline.files.slice();
+    state.source = baseline.source;
+    renderAll();
+    showNotice(
+      (baseline.source === "dataset" ? "Bundled dataset restored." : "Built-in sample restored.") +
+        " Import a CSV to screen your own list.",
+      "success",
+      false
+    );
+  }
+
+  function bindEvents() {
+    document.getElementById("import-btn").addEventListener("click", function () {
+      document.getElementById("file-input").click();
+    });
+
+    document.getElementById("empty-import").addEventListener("click", function () {
+      document.getElementById("file-input").click();
+    });
+
+    document.getElementById("file-input").addEventListener("change", function (event) {
+      var files = Array.from(event.target.files || []);
+      event.target.value = "";
+      handleFiles(files);
+    });
+
+    document.getElementById("reset-sample").addEventListener("click", resetToSample);
+
+    document.getElementById("notice-close").addEventListener("click", function () {
+      document.getElementById("notice").hidden = true;
+      clearTimeout(state.noticeTimer);
+    });
+
+    document.getElementById("screen-tabs").addEventListener("click", function (event) {
+      var tab = event.target.closest(".screen-tab");
+      if (tab) switchScreen(tab.dataset.screen, false);
+    });
+
+    document.getElementById("screen-tabs").addEventListener("keydown", function (event) {
+      if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(event.key) === -1) return;
+      event.preventDefault();
+      var current = SCREEN_ORDER.indexOf(state.settings.activeScreen);
+      var next = current;
+      if (event.key === "ArrowLeft") next = (current - 1 + SCREEN_ORDER.length) % SCREEN_ORDER.length;
+      if (event.key === "ArrowRight") next = (current + 1) % SCREEN_ORDER.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = SCREEN_ORDER.length - 1;
+      switchScreen(SCREEN_ORDER[next], true);
+    });
+
+    var controls = document.getElementById("screen-controls");
+
+    controls.addEventListener("input", function (event) {
+      var target = event.target;
+
+      if (target.matches("[data-weight]")) {
+        var key = target.dataset.weight;
+        state.settings[state.settings.activeScreen].weights[key] = clamp(Number(target.value) || 0, 0, 100);
+        updateWeightOutputs();
+        renderAll();
+        scheduleSaveSettings();
+        return;
+      }
+
+      if (target.id === "universe-input") {
+        state.settings.growth.universe = target.value;
+        clearTimeout(state.universeTimer);
+        state.universeTimer = setTimeout(function () {
+          renderAll();
+          scheduleSaveSettings();
+        }, 220);
+      }
+    });
+
+    controls.addEventListener("change", function (event) {
+      var target = event.target;
+      if (target.matches("[data-weight]") || target.id === "universe-input") {
+        saveSettings();
+      }
+    });
+
+    controls.addEventListener("click", function (event) {
+      var target = event.target;
+
+      var basisButton = target.closest("[data-basis]");
+      if (basisButton) {
+        state.settings.growth.revenueBasis = basisButton.dataset.basis;
+        controls.querySelectorAll("[data-basis]").forEach(function (button) {
+          button.setAttribute("aria-pressed", button === basisButton ? "true" : "false");
+        });
+        renderAll();
+        saveSettings();
+        return;
+      }
+
+      if (target.closest("#reset-universe")) {
+        state.settings.growth.universe = DEFAULT_UNIVERSE;
+        var input = document.getElementById("universe-input");
+        if (input) input.value = DEFAULT_UNIVERSE;
+        renderAll();
+        saveSettings();
+      }
+    });
+
+    document.getElementById("reset-weights").addEventListener("click", function () {
+      var screen = state.settings.activeScreen;
+      state.settings[screen].weights = clone(DEFAULT_SETTINGS[screen].weights);
+      renderAll({ rebuildControls: true });
+      saveSettings();
+    });
+
+    var controlsPanel = document.querySelector(".controls");
+    var settingsToggle = document.getElementById("settings-toggle");
+
+    function setControlsCollapsed(collapsed) {
+      controlsPanel.classList.toggle("is-collapsed", collapsed);
+      settingsToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      document.getElementById("settings-toggle-label").textContent = collapsed ? "Adjust" : "Hide";
+    }
+
+    settingsToggle.addEventListener("click", function () {
+      setControlsCollapsed(!controlsPanel.classList.contains("is-collapsed"));
+    });
+
+    if (window.matchMedia && window.matchMedia("(max-width: 920px)").matches) {
+      setControlsCollapsed(true);
+    }
+
+    document.getElementById("empty-settings").addEventListener("click", function () {
+      setControlsCollapsed(false);
+      controlsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    function hasFiles(event) {
+      return Boolean(event.dataTransfer && Array.from(event.dataTransfer.types || []).indexOf("Files") !== -1);
+    }
+
+    window.addEventListener("dragenter", function (event) {
+      if (!hasFiles(event)) return;
+      event.preventDefault();
+      document.getElementById("drop-overlay").hidden = false;
+    });
+
+    window.addEventListener("dragover", function (event) {
+      if (!hasFiles(event)) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      document.getElementById("drop-overlay").hidden = false;
+    });
+
+    window.addEventListener("dragleave", function (event) {
+      // A null relatedTarget means the pointer left the window, not a child.
+      if (!event.relatedTarget) document.getElementById("drop-overlay").hidden = true;
+    });
+
+    window.addEventListener("drop", function (event) {
+      if (!hasFiles(event)) return;
+      event.preventDefault();
+      document.getElementById("drop-overlay").hidden = true;
+      handleFiles(event.dataTransfer.files);
+    });
+  }
+
+  function init() {
+    state.rows = [];
+    state.rowsRead = 0;
+    state.files = [];
+    state.source = "sample";
+
+    var sampleText = document.getElementById("sample-csv").textContent;
+    try {
+      state.sampleRows = parseCSVData(sampleText, SAMPLE_FILE);
+      state.rows = state.sampleRows.slice();
+      state.rowsRead = state.sampleRows.length;
+      state.baseline = { rows: state.sampleRows.slice(), source: "sample", files: [] };
+    } catch (error) {
+      showNotice("Could not load the built-in sample: " + error.message, "error", true);
+      state.rows = [];
+      state.sampleRows = [];
+      state.baseline = null;
+    }
+
+    state.settings = loadSettings();
+    buildTabs();
+    bindEvents();
+    renderAll({ rebuildControls: true });
+    loadBundledDataset();
+  }
+
+  function loadBundledDataset() {
+    if (typeof fetch !== "function") return;
+    fetch(DATASET_PATH, { cache: "no-store" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.text();
+      })
+      .then(function (text) {
+        var rows = parseCSVData(text, DATASET_PATH);
+        if (!rows.length) throw new Error("No rows found.");
+        state.baseline = { rows: rows.slice(), source: "dataset", files: [DATASET_PATH] };
+        // Do not overwrite an import the visitor made while this was loading.
+        if (state.source !== "imported") {
+          state.rows = rows.slice();
+          state.rowsRead = rows.length;
+          state.files = [DATASET_PATH];
+          state.source = "dataset";
+          renderAll();
+        }
+      })
+      .catch(function () {
+        // Offline, opened from disk, or a missing file: the embedded sample stays.
+      });
+  }
+
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+  }
+
+  if (typeof window === "undefined") {
+    globalThis.__segmenterTest = {
+      parseCSV: parseCSV,
+      parseCSVData: parseCSVData,
+      mergeRows: mergeRows,
+      evaluateScreen: evaluateScreen,
+      buildCriteria: buildCriteria,
+      percentileScores: percentileScores,
+      DEFAULT_SETTINGS: DEFAULT_SETTINGS,
+      SCREEN_ORDER: SCREEN_ORDER
+    };
+  }
+})();
+</script>
+
+</body>
+</html>
