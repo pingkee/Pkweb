@@ -1,0 +1,13 @@
+Name,MM,MaxPersons,StartMonth,StartYear,Group,GroupColor,Blocker
+"ADEX Development",6,1,1,2027,"Integration","#8ab1ff",""
+"ICIT For Release",0.25,1,11,2027,"Release","#d2b449",""
+"ICIT NDP Release",0.25,1,6,2027,"Release","#d2b449",""
+"Frontend Incident Development",3,1,0,2027,"Migration Work","#56401e",""
+"Backend Study",1,1,0,2027,"Migration Work","#56401e",""
+"Frontend Opslog Development",3,1,4,2027,"Migration Work","#56401e",""
+"Frontend CET development",3,1,3,2027,"Migration Work","#56401e",""
+"UI/UX design",1,1,0,2027,"Migration Work","#56401e",""
+"Mobile Backend study",1,1,0,2027,"Mobile development","#393779",""
+"Mobile integration service update",3,1,1,2027,"Mobile development","#393779",""
+"[MR] incident microservice",3,1,3,2027,"Migration Work","#56401e",""
+"[MR] Workspace dev",2,1,1,2027,"Migration Work","#56401e",""
