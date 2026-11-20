@@ -236,7 +236,6 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
       <input type="file" id="importFile" accept=".csv" style="display:none">
       <button class="secondary" id="importBtn">Import CSV</button>
       <button class="secondary" id="exportCsv">Export CSV</button>
-      <button class="primary" id="saveGithub">Save to GitHub</button>
     </div>
   </div>
   <div class="table-wrap"><table><thead><tr><th>Task</th><th class="num">Effort (MM)</th><th class="num">Max Persons</th><th class="num">Duration (Mo)</th><th>Start date</th><th>Finish date</th><th>Status</th><th>Blocker remark</th><th></th></tr></thead><tbody id="jobTable"></tbody></table></div>
@@ -244,10 +243,25 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
 
 <section class="panel">
   <div class="section-head">
-    <div><h2>8. GitHub repository sync</h2><div class="sub">Stores the roadmap CSV in <strong>pingkee/Pkweb</strong> on <strong>gh-pages</strong> at <code>project-management/data/roadmap_tasks.csv</code>. The file is auto-imported every time this page loads.</div></div>
-    <button class="secondary" id="reloadGithub">Reload from GitHub</button>
+    <div><h2>8. GitHub repository sync</h2><div class="sub">Plans are saved as separate CSV files in <strong>pingkee/Pkweb</strong> on <strong>gh-pages</strong> under <code>project-management/data/</code>.</div></div>
+    <button class="secondary" id="refreshFiles" type="button">Refresh file list</button>
   </div>
   <div class="sync-grid">
+    <div>
+      <label for="githubFileName">Plan file name (save as)</label>
+      <input id="githubFileName" type="text" list="githubFileNames" maxlength="80" placeholder="e.g. roadmap_2027.csv" spellcheck="false">
+      <datalist id="githubFileNames"></datalist>
+    </div>
+    <button class="primary" id="saveGithub" type="button">Save to GitHub</button>
+  </div>
+  <div class="sync-grid" style="margin-top:12px">
+    <div>
+      <label for="githubFileSelect">Load a saved plan</label>
+      <select id="githubFileSelect"></select>
+    </div>
+    <button class="secondary" id="loadFileBtn" type="button">Load selected file</button>
+  </div>
+  <div class="sync-grid" style="margin-top:12px">
     <div>
       <label for="githubToken">GitHub token (fine-grained PAT with Contents: Read and write)</label>
       <input type="password" id="githubToken" autocomplete="off" spellcheck="false" placeholder="github_pat_...">
@@ -256,10 +270,30 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
       <input type="checkbox" id="rememberToken" style="width:auto"> Remember token on this device
     </label>
   </div>
-  <div class="status" id="syncStatus" style="margin-top:12px">Auto-import runs on every page load.</div>
-  <div class="sub" style="margin-top:8px">The token is kept only in this browser and is sent only to api.github.com. It is never committed. Unsaved page changes are replaced by the stored CSV on reload.</div>
+  <div class="status" id="syncStatus" style="margin-top:12px">Pick a saved plan or start a new one when the page loads.</div>
+  <div class="sub" style="margin-top:8px">The token is kept only in this browser and is sent only to api.github.com. It is never committed. The file list can be read without a token because the repository is public.</div>
 </section>
 </main>
+
+<!-- Startup: load saved plan -->
+<div class="modal-overlay" id="loadModal" style="display:flex">
+  <div class="modal-box" style="max-width:560px">
+    <h3>Load from GitHub database or start a new plan</h3>
+    <p class="sub" style="margin-top:0">Choose a CSV saved in <strong>pingkee/Pkweb → project-management/data/</strong>, or begin with an empty plan.</p>
+    <label for="startupFileSelect">Saved CSV files</label>
+    <select id="startupFileSelect" size="7" style="height:auto;padding:6px"></select>
+    <div style="margin-top:10px">
+      <label for="startupManualFile">Or type a file name</label>
+      <input id="startupManualFile" type="text" maxlength="80" spellcheck="false" placeholder="e.g. roadmap_2027.csv">
+    </div>
+    <div class="status" id="loadStatus" style="margin-top:12px">Loading saved CSV files from GitHub…</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+      <button class="secondary" id="startNewPlan" type="button">Start a new plan</button>
+      <button class="primary" id="loadSelectedPlan" type="button">Load selected plan</button>
+    </div>
+    <div class="sub" style="margin-top:10px">If the list cannot load, type the file name exactly as saved in the repository.</div>
+  </div>
+</div>
 
 <!-- Instructions Modal -->
 <div class="modal-overlay" id="pptModal">
@@ -276,7 +310,7 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
   </div>
 </div>
 
-<footer>Planner runs locally in your browser.</footer>
+<footer>Planner runs locally in your browser. GitHub sync writes to the repository only when you click Save.</footer>
 
 <script>
 (()=> {
@@ -284,8 +318,9 @@ const $=id=>document.getElementById(id);
 const monthsNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const defaultPalette=['#5b63e8','#008f9c','#8b5cc7','#d46a3b','#3478c5','#b34d7c','#6c8f2e','#6875a8'];
 
-const GITHUB_CONFIG={owner:'pingkee',repo:'Pkweb',branch:'gh-pages',path:'project-management/data/roadmap_tasks.csv'};
+const GITHUB_CONFIG={owner:'pingkee',repo:'Pkweb',branch:'gh-pages',dataDir:'project-management/data'};
 const GITHUB_TOKEN_KEY='pk_github_token';
+const GITHUB_LAST_FILE_KEY='pk_last_csv';
 
 let teamSize=3, year=new Date().getFullYear(), currentMonth=new Date().getMonth()+1, jobs=[], nextId=1;
 let editingJobId = null;
@@ -298,6 +333,7 @@ let taskGroups = [
   {id:4, name:'Group 4', color:'#d46a3b'},
 ];
 let nextGroupId = 5;
+let currentCsvName = '';
 
 $('startYearInput').value = year;
 
@@ -1520,6 +1556,10 @@ function getStoredToken(){
   try{ return localStorage.getItem(GITHUB_TOKEN_KEY) || sessionStorage.getItem(GITHUB_TOKEN_KEY) || ''; }
   catch(e){ return ''; }
 }
+function lastSavedName(){
+  try{ return localStorage.getItem(GITHUB_LAST_FILE_KEY) || ''; }
+  catch(e){ return ''; }
+}
 function persistToken(){
   const token=$('githubToken').value.trim();
   const remember=$('rememberToken').checked;
@@ -1538,6 +1578,11 @@ function setSyncStatus(msg,type='',linkUrl){
     el.appendChild(a);
   }
 }
+function setLoadStatus(msg,type=''){
+  const el=$('loadStatus');
+  el.className='status '+type;
+  el.textContent=msg;
+}
 function utf8ToBase64(str){
   const bytes=new TextEncoder().encode(str);
   let binary='';
@@ -1552,8 +1597,25 @@ function base64ToUtf8(b64){
   for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
   return new TextDecoder().decode(bytes);
 }
-function githubContentsPath(){
-  return `/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
+function normalizeCsvName(raw){
+  let name=String(raw||'').trim();
+  if(!name) return '';
+  name=name.replace(/\\/g,'/').split('/').pop();
+  if(!/\.csv$/i.test(name)) name+='.csv';
+  if(!/^[A-Za-z0-9][A-Za-z0-9 ._-]*\.csv$/i.test(name)) return '';
+  return name;
+}
+function apiContentsPath(name){
+  const base=`/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.dataDir}`;
+  return name ? `${base}/${encodeURIComponent(name)}` : base;
+}
+function setCurrentCsvName(name){
+  currentCsvName=name;
+  $('githubFileName').value=name;
+  try{
+    if(name) localStorage.setItem(GITHUB_LAST_FILE_KEY, name);
+    else localStorage.removeItem(GITHUB_LAST_FILE_KEY);
+  }catch(e){}
 }
 async function githubRequest(path, options={}, token){
   const headers={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(options.headers||{})};
@@ -1568,102 +1630,220 @@ async function githubErrorMessage(res){
   }catch(e){}
   if(res.status===401) msg='GitHub token is invalid or expired.';
   else if(res.status===403) msg='GitHub token needs Contents: Read and write permission for this repository (or the rate limit was hit).';
-  else if(res.status===404) msg='GitHub could not find the repository, branch, or file. Check that the token can access it.';
-  else if(res.status===409 || res.status===422) msg='The file changed on GitHub. Reload from GitHub, then save again.';
+  else if(res.status===404) msg='GitHub could not find the repository, folder, or file. Check that the token can access it.';
+  else if(res.status===409 || res.status===422) msg='The file changed on GitHub. Reload the file list, then save again.';
   return msg;
 }
-async function fetchCsvFromGithub(token){
-  let apiError=null;
+async function listCsvFiles(){
+  const token=$('githubToken').value.trim();
+  async function fetchList(t){
+    const res=await githubRequest(`${apiContentsPath()}?ref=${GITHUB_CONFIG.branch}`,{},t);
+    if(!res.ok) throw new Error(await githubErrorMessage(res));
+    const items=await res.json();
+    if(!Array.isArray(items)) throw new Error('GitHub returned an unexpected file list.');
+    return items
+      .filter(x=>x.type==='file' && /\.csv$/i.test(x.name))
+      .map(x=>({name:x.name}))
+      .sort((a,b)=>a.name.localeCompare(b.name));
+  }
   if(token){
-    try{
-      const res=await githubRequest(`${githubContentsPath()}?ref=${GITHUB_CONFIG.branch}`,{},token);
-      if(res.ok){
-        const data=await res.json();
-        if(data && data.content) return {text:base64ToUtf8(data.content), source:'GitHub API', apiError:null};
-        apiError='GitHub returned an unexpected response.';
-      }else if(res.status!==404){
-        apiError=await githubErrorMessage(res);
-      }
-    }catch(err){
-      apiError=err.message || 'Could not reach api.github.com.';
+    try{ return await fetchList(token); }
+    catch(err){
+      try{ return await fetchList(''); }catch(err2){ throw err; }
     }
   }
-  const res=await fetch(`data/roadmap_tasks.csv?t=${Date.now()}`,{cache:'no-store'});
-  if(!res.ok){
-    if(apiError) throw new Error(apiError);
-    throw new Error(res.status===404 ? 'No data/roadmap_tasks.csv has been saved yet.' : `Could not load the CSV (${res.status}).`);
-  }
-  return {text:await res.text(), source:'GitHub Pages', apiError};
+  return fetchList('');
 }
-async function loadCsvFromGithub(announce){
-  if(announce) setSyncStatus('Loading data/roadmap_tasks.csv from GitHub…');
+function populateFileLists(files){
+  const names=files.map(f=>f.name);
+  ['startupFileSelect','githubFileSelect'].forEach(id=>{
+    const sel=$(id);
+    const prev=sel.value;
+    sel.innerHTML='';
+    if(!names.length){
+      const opt=document.createElement('option');
+      opt.value=''; opt.textContent='No CSV files saved yet';
+      sel.appendChild(opt);
+      sel.disabled=true;
+      return;
+    }
+    sel.disabled=false;
+    names.forEach(n=>{
+      const opt=document.createElement('option');
+      opt.value=n; opt.textContent=n;
+      sel.appendChild(opt);
+    });
+    if(prev && names.includes(prev)) sel.value=prev;
+    else{
+      const last=lastSavedName();
+      if(last && names.includes(last)) sel.value=last;
+    }
+  });
+  const dl=$('githubFileNames');
+  dl.innerHTML='';
+  names.forEach(n=>{
+    const opt=document.createElement('option');
+    opt.value=n;
+    dl.appendChild(opt);
+  });
+}
+async function refreshFileLists(showInModal=false, announce=false){
+  if(showInModal) setLoadStatus('Loading saved CSV files from GitHub…');
+  else if(announce) setSyncStatus('Refreshing saved file list…');
+  try{
+    const files=await listCsvFiles();
+    populateFileLists(files);
+    const noun=`${files.length} saved CSV file${files.length===1?'':'s'}`;
+    if(showInModal) setLoadStatus(files.length?`${noun} found. Select one to load, or start a new plan.`:'No CSV files saved yet. Start a new plan and save it.', files.length?'ok':'warn');
+    else if(announce) setSyncStatus(`${noun} found.`,'ok');
+    return files;
+  }catch(err){
+    const msg=err.message || 'Could not load the saved file list.';
+    if(showInModal) setLoadStatus(`${msg} You can type a file name instead.`,'error');
+    else if(announce) setSyncStatus(msg,'error');
+    return [];
+  }
+}
+async function loadCsvByName(rawName){
+  const name=normalizeCsvName(rawName);
+  if(!name) throw new Error('Enter a valid CSV file name.');
   const token=$('githubToken').value.trim();
   try{
-    const result=await fetchCsvFromGithub(token);
-    const count=importCsvText(result.text);
-    let msg=`Auto-imported ${count} task${count===1?'':'s'} from ${result.source}.`;
-    if(result.apiError) msg+=` Token not used: ${result.apiError}`;
-    setSyncStatus(msg, result.apiError ? 'warn' : 'ok');
-  }catch(err){
-    if(announce) setSyncStatus(err.message,'error');
-    else setSyncStatus('No saved roadmap loaded yet. Save your plan to GitHub to enable auto-import.','warn');
-  }
+    const res=await githubRequest(`${apiContentsPath(name)}?ref=${GITHUB_CONFIG.branch}`,{},token);
+    if(res.ok){
+      const data=await res.json();
+      if(data && data.content){
+        const count=importCsvText(base64ToUtf8(data.content));
+        setCurrentCsvName(name);
+        return {count, source:'GitHub API'};
+      }
+    }
+  }catch(e){}
+  const res=await fetch(`data/${encodeURIComponent(name)}?t=${Date.now()}`,{cache:'no-store'});
+  if(!res.ok) throw new Error(res.status===404 ? `"${name}" was not found in ${GITHUB_CONFIG.dataDir}/.` : `Could not load "${name}" (${res.status}).`);
+  const count=importCsvText(await res.text());
+  setCurrentCsvName(name);
+  return {count, source:'GitHub Pages'};
 }
 async function saveCsvToGithub(){
   const token=$('githubToken').value.trim();
   if(!token){ setSyncStatus('Enter a GitHub token before saving.','error'); $('githubToken').focus(); return; }
   persistToken();
+  const name=normalizeCsvName($('githubFileName').value);
+  if(!name){ setSyncStatus('Enter a valid file name, e.g. roadmap_2027.csv.','error'); $('githubFileName').focus(); return; }
+  $('githubFileName').value=name;
   if(!jobs.length){ setSyncStatus('There are no tasks to save.','warn'); return; }
-  setSyncStatus('Saving data/roadmap_tasks.csv to GitHub…');
+  setSyncStatus(`Saving ${name} to GitHub…`);
   try{
     let sha=null;
-    const getRes=await githubRequest(`${githubContentsPath()}?ref=${GITHUB_CONFIG.branch}`,{},token);
+    const getRes=await githubRequest(`${apiContentsPath(name)}?ref=${GITHUB_CONFIG.branch}`,{},token);
     if(getRes.ok){
       const data=await getRes.json();
       sha=data.sha;
     }else if(getRes.status!==404){
       throw new Error(await githubErrorMessage(getRes));
     }
-
+    if(sha && name!==currentCsvName){
+      if(!confirm(`"${name}" already exists in the repository. Overwrite it?`)){ setSyncStatus('Save cancelled.','warn'); return; }
+    }
     const body={
-      message:`Update roadmap tasks (${new Date().toISOString().slice(0,16).replace('T',' ')} UTC)`,
+      message:`Update ${name} (${new Date().toISOString().slice(0,16).replace('T',' ')} UTC)`,
       content:utf8ToBase64(serializeCsv()),
       branch:GITHUB_CONFIG.branch
     };
     if(sha) body.sha=sha;
-
-    const putRes=await githubRequest(githubContentsPath(),{
+    const putRes=await githubRequest(apiContentsPath(name),{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(body)
     },token);
     if(!putRes.ok) throw new Error(await githubErrorMessage(putRes));
-
     const result=await putRes.json();
     const commitUrl=(result && result.commit) ? result.commit.html_url : null;
-    setSyncStatus(`Saved ${jobs.length} task${jobs.length===1?'':'s'} to GitHub.`, 'ok', commitUrl);
+    setCurrentCsvName(name);
+    setSyncStatus(`Saved ${jobs.length} task${jobs.length===1?'':'s'} to ${name}.`, 'ok', commitUrl);
+    refreshFileLists(false,false);
   }catch(err){
     setSyncStatus(err.message || 'Failed to save to GitHub.','error');
   }
 }
+function openLoadModal(){
+  $('loadModal').style.display='flex';
+  $('startupManualFile').value='';
+  $('startNewPlan').disabled=false;
+  $('loadSelectedPlan').disabled=false;
+  const last=lastSavedName();
+  if(last && !$('githubFileName').value) $('githubFileName').value=last;
+  refreshFileLists(true,false);
+}
+function closeLoadModal(){
+  $('loadModal').style.display='none';
+}
+function startNewPlan(){
+  jobs=[];
+  nextId=1;
+  editingJobId=null;
+  editingTableId=null;
+  taskGroups=[
+    {id:1,name:'Group 1',color:'#5b63e8'},
+    {id:2,name:'Group 2',color:'#008f9c'},
+    {id:3,name:'Group 3',color:'#8b5cc7'},
+    {id:4,name:'Group 4',color:'#d46a3b'}
+  ];
+  nextGroupId=5;
+  $('plannerTitle').value='';
+  setCurrentCsvName('');
+  render();
+  closeLoadModal();
+  setSyncStatus('Started a new plan. Enter a file name in section 8 when you save it.','ok');
+}
+async function loadSelectedPlan(){
+  const manual=$('startupManualFile').value.trim();
+  const name=manual ? normalizeCsvName(manual) : normalizeCsvName($('startupFileSelect').value);
+  if(!name){ setLoadStatus(manual ? 'Enter a valid CSV file name.' : 'Select a saved CSV or type a file name.','error'); return; }
+  $('startNewPlan').disabled=true;
+  $('loadSelectedPlan').disabled=true;
+  setLoadStatus(`Loading ${name}…`);
+  try{
+    const result=await loadCsvByName(name);
+    closeLoadModal();
+    setSyncStatus(`Loaded ${result.count} task${result.count===1?'':'s'} from ${name} (${result.source}).`,'ok');
+  }catch(err){
+    setLoadStatus(err.message || 'Could not load that file.','error');
+    $('startNewPlan').disabled=false;
+    $('loadSelectedPlan').disabled=false;
+  }
+}
 
 $('saveGithub').addEventListener('click', saveCsvToGithub);
-$('reloadGithub').addEventListener('click', ()=>{
-  if(jobs.length && !confirm('Replace the tasks on this page with the CSV saved on GitHub?')) return;
-  persistToken();
-  loadCsvFromGithub(true);
+$('refreshFiles').addEventListener('click', ()=>refreshFileLists(false,true));
+$('loadFileBtn').addEventListener('click', async ()=>{
+  const name=normalizeCsvName($('githubFileSelect').value) || normalizeCsvName($('githubFileName').value);
+  if(!name){ setSyncStatus('Select a saved CSV file, or type its file name.','error'); return; }
+  if(jobs.length && !confirm(`Replace the tasks on this page with "${name}"?`)) return;
+  try{
+    const result=await loadCsvByName(name);
+    setSyncStatus(`Loaded ${result.count} task${result.count===1?'':'s'} from ${name} (${result.source}).`,'ok');
+  }catch(err){
+    setSyncStatus(err.message || 'Could not load that file.','error');
+  }
 });
+$('startNewPlan').addEventListener('click', startNewPlan);
+$('loadSelectedPlan').addEventListener('click', loadSelectedPlan);
+$('startupManualFile').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); loadSelectedPlan(); } });
 $('rememberToken').addEventListener('change', persistToken);
-$('githubToken').addEventListener('change', persistToken);
+$('githubToken').addEventListener('change', ()=>{ persistToken(); refreshFileLists(false,false); });
 
 (function initGithubSync(){
   const stored=getStoredToken();
   if(stored) $('githubToken').value=stored;
   try{ $('rememberToken').checked=!!localStorage.getItem(GITHUB_TOKEN_KEY); }catch(e){}
+  const last=lastSavedName();
+  if(last) $('githubFileName').value=last;
 })();
 
 render();
-loadCsvFromGithub(false);
+openLoadModal();
 })();
 </script>
 </body>
