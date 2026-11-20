@@ -1406,6 +1406,98 @@
     line-height: 1.55;
   }
 
+  /* ---------- save modal ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: grid;
+    place-items: center;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) calc(24px + env(safe-area-inset-left, 0px));
+    background: var(--overlay);
+  }
+
+  .modal-panel {
+    width: 100%;
+    max-width: 460px;
+    padding: 26px 26px 22px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .modal-panel h2 {
+    margin: 4px 0 9px;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .modal-copy {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .modal-copy code {
+    padding: 1px 4px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .modal-label {
+    display: block;
+    margin: 18px 0 6px;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .modal-panel input[type="password"] {
+    width: 100%;
+    padding: 10px 11px;
+    border: 1px solid var(--line-strong);
+    border-radius: 9px;
+    background: var(--surface-3);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .modal-panel input[type="password"]:focus {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+
+  .modal-status {
+    min-height: 18px;
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .modal-status.is-error { color: var(--neg); }
+  .modal-status.is-ok { color: var(--pos); }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
   /* ---------- responsive ---------- */
   @media (max-width: 1120px) {
     .rank-row {
@@ -1536,6 +1628,7 @@
     </a>
     <div class="top-actions">
       <span class="status-chip is-sample" id="source-chip">Sample data</span>
+      <button type="button" class="btn btn-ghost" id="save-data" title="Commit the imported rows to financial-screener/data/ on GitHub" hidden>Save to data/</button>
       <button type="button" class="btn btn-ghost" id="reset-sample" title="Discard imported files and restore the bundled dataset" hidden>Reset data</button>
       <button type="button" class="btn btn-primary" id="import-btn">
         <svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true">
@@ -1659,7 +1752,7 @@
         </div>
         <div>
           <h3>Data and signs</h3>
-          <p>Share-count growth is positive for dilution and negative for buybacks. This is the yfinance/GARP convention used by the scraper. Imports merge by ticker, keeping the row with the latest <code>As_Of</code>. Files are parsed locally and are never uploaded. Yahoo data can be stale or incomplete; this is not investment advice.</p>
+          <p>Share-count growth is positive for dilution and negative for buybacks. This is the yfinance/GARP convention used by the scraper. Imports merge by ticker, keeping the row with the latest <code>As_Of</code>. Files are parsed locally; only the optional <strong>Save to data/</strong> action sends the rows you choose to commit to your own repository. Yahoo data can be stale or incomplete; this is not investment advice.</p>
         </div>
       </div>
     </details>
@@ -1675,6 +1768,27 @@
   <div class="drop-panel">
     <h2>Drop CSV files</h2>
     <p>Release to merge them into this screen. Duplicate tickers keep the latest As_Of date.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="save-modal" hidden>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="save-title" aria-describedby="save-copy">
+    <p class="kicker">Repository sync</p>
+    <h2 id="save-title">Replace the dataset</h2>
+    <p class="modal-copy" id="save-copy">
+      Commit the rows currently in view over
+      <code>financial-screener/data/stocks_finanacials_20112026.csv</code>
+      in <code>pingkee/Pkweb</code> on <code>gh-pages</code>. Enter a fine-grained
+      GitHub token with <strong>Contents: Read and write</strong>. It stays in this
+      browser tab, is sent only to api.github.com, and is never committed.
+    </p>
+    <label class="modal-label" for="token-input">GitHub token</label>
+    <input id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+    <p class="modal-status" id="save-status" role="status"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="save-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="save-confirm">Save to data/</button>
+    </div>
   </div>
 </div>
 
@@ -1709,6 +1823,9 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
   // embedded sample when the page is served over HTTP; the embedded copy keeps
   // the page working offline and when opened straight from disk.
   var DATASET_PATH = "data/stocks_finanacials_20112026.csv";
+  var DATASET_FILE = DATASET_PATH.split("/").pop();
+  var GITHUB_CONFIG = { owner: "pingkee", repo: "Pkweb", branch: "gh-pages", dataDir: "financial-screener/data" };
+  var GITHUB_TOKEN_KEY = "equitySegmenter.githubToken.v1";
   var SETTINGS_KEY = "equitySegmenter.settings.v1";
   var DEFAULT_UNIVERSE = "Technology, Semiconductor, Software, Information Technology, Internet Content, Artificial Intelligence, Cloud, Data Center";
   var SCREEN_ORDER = ["growth", "netNet", "netGrowth"];
@@ -2571,6 +2688,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
     document.getElementById("stat-tickers").textContent = String(state.rows.length);
     document.getElementById("stat-rows").textContent = String(state.rowsRead);
     document.getElementById("reset-sample").hidden = sample;
+    document.getElementById("save-data").hidden = state.source !== "imported";
 
     var line;
     if (sample) {
@@ -2880,6 +2998,22 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
 
     document.getElementById("reset-sample").addEventListener("click", resetToSample);
 
+    document.getElementById("save-data").addEventListener("click", openSaveModal);
+    document.getElementById("save-cancel").addEventListener("click", closeSaveModal);
+    document.getElementById("save-confirm").addEventListener("click", saveRowsToGithub);
+    document.getElementById("save-modal").addEventListener("click", function (event) {
+      if (event.target === this) closeSaveModal();
+    });
+    document.getElementById("token-input").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        saveRowsToGithub();
+      }
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && !document.getElementById("save-modal").hidden) closeSaveModal();
+    });
+
     document.getElementById("notice-close").addEventListener("click", function () {
       document.getElementById("notice").hidden = true;
       clearTimeout(state.noticeTimer);
@@ -3064,6 +3198,186 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
       .catch(function () {
         // Offline, opened from disk, or a missing file: the embedded sample stays.
       });
+  }
+
+  // ---------- repository sync ----------
+  // GitHub Pages cannot be written from the browser, so "Save to data/" commits
+  // the rows in view over the bundled CSV with the GitHub contents API.
+  var CSV_COLUMNS = [
+    ["Ticker", "ticker"],
+    ["Company", "company"],
+    ["Sector", "sector"],
+    ["Industry", "industry"],
+    ["Currency", "currency"],
+    ["Financial_Currency", "financialCurrency"],
+    ["PE", "pe"],
+    ["PB", "pb"],
+    ["PS", "ps"],
+    ["P_FCF", "pFcf"],
+    ["PEG", "peg"],
+    ["Share_Count_Change_5Y_Pct", "shareChange"],
+    ["Share_Count_Period_Yrs", "sharePeriod"],
+    ["Liquidation_Value", "liquidationValue"],
+    ["Liquidation_As_Of", "liquidationAsOf"],
+    ["Shareholder_Equity_Growth_Pct", "equityGrowth"],
+    ["Shareholder_Equity_CAGR_Pct", "equityCagr"],
+    ["Equity_Growth_Period_Yrs", "equityPeriod"],
+    ["Revenue_YoY_Growth_Pct", "revenueYoy"],
+    ["Revenue_CAGR_Pct", "revenueCagr"],
+    ["Revenue_CAGR_Period_Yrs", "revenuePeriod"],
+    ["Market_Cap", "marketCap"],
+    ["FCF", "fcf"],
+    ["As_Of", "asOf"],
+    ["Notes", "notes"]
+  ];
+
+  function csvCell(value) {
+    var text = value == null ? "" : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+  }
+
+  function serializeRows(rows) {
+    var lines = [CSV_COLUMNS.map(function (column) { return column[0]; }).join(",")];
+    rows.forEach(function (row) {
+      lines.push(CSV_COLUMNS.map(function (column) { return csvCell(row[column[1]]); }).join(","));
+    });
+    return lines.join("\r\n") + "\r\n";
+  }
+
+  function utf8ToBase64(text) {
+    var bytes = new TextEncoder().encode(text);
+    var binary = "";
+    for (var i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
+    return btoa(binary);
+  }
+
+  function getGithubToken() {
+    try { return sessionStorage.getItem(GITHUB_TOKEN_KEY) || ""; } catch (error) { return ""; }
+  }
+
+  function storeGithubToken(token) {
+    try { sessionStorage.setItem(GITHUB_TOKEN_KEY, token); } catch (error) { /* tab-only convenience */ }
+  }
+
+  function clearGithubToken() {
+    try { sessionStorage.removeItem(GITHUB_TOKEN_KEY); } catch (error) { /* nothing stored */ }
+  }
+
+  function githubRequest(url, options, token) {
+    var opts = options || {};
+    var headers = Object.assign(
+      { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+      opts.headers || {}
+    );
+    if (token) headers.Authorization = "Bearer " + token;
+    return fetch(url, {
+      method: opts.method || "GET",
+      headers: headers,
+      body: opts.body,
+      cache: "no-store"
+    });
+  }
+
+  async function githubErrorMessage(response) {
+    if (response.status === 401) return "The GitHub token is invalid or expired.";
+    if (response.status === 403) return "The token needs Contents: Read and write permission for " + GITHUB_CONFIG.owner + "/" + GITHUB_CONFIG.repo + ".";
+    if (response.status === 404) return "GitHub could not find " + GITHUB_CONFIG.dataDir + " in " + GITHUB_CONFIG.owner + "/" + GITHUB_CONFIG.repo + ".";
+    try {
+      var data = await response.json();
+      if (data && data.message) return data.message;
+    } catch (error) {
+      // Fall through to the generic message.
+    }
+    return "GitHub returned HTTP " + response.status + ".";
+  }
+
+  function setSaveStatus(message, tone) {
+    var status = document.getElementById("save-status");
+    status.textContent = message || "";
+    status.className = "modal-status" + (tone ? " is-" + tone : "");
+  }
+
+  function openSaveModal() {
+    var input = document.getElementById("token-input");
+    input.value = "";
+    var stored = getGithubToken();
+    setSaveStatus(
+      stored ? "A token is saved for this tab; leave the field empty to reuse it." : "No token is saved for this tab yet."
+    );
+    document.getElementById("save-modal").hidden = false;
+    setTimeout(function () { input.focus(); }, 0);
+  }
+
+  function closeSaveModal() {
+    document.getElementById("save-modal").hidden = true;
+  }
+
+  async function saveRowsToGithub() {
+    var input = document.getElementById("token-input");
+    var token = input.value.trim() || getGithubToken();
+    if (!token) {
+      setSaveStatus("Enter a GitHub token with Contents: Read and write permission.", "error");
+      input.focus();
+      return;
+    }
+
+    var confirmButton = document.getElementById("save-confirm");
+    confirmButton.disabled = true;
+    setSaveStatus("Saving " + state.rows.length + " row" + (state.rows.length === 1 ? "" : "s") + " to " + GITHUB_CONFIG.dataDir + "/" + DATASET_FILE + "…");
+
+    var apiUrl = "https://api.github.com/repos/" + GITHUB_CONFIG.owner + "/" + GITHUB_CONFIG.repo +
+      "/contents/" + GITHUB_CONFIG.dataDir + "/" + encodeURIComponent(DATASET_FILE);
+
+    try {
+      var getRes = await githubRequest(apiUrl + "?ref=" + GITHUB_CONFIG.branch, {}, token);
+      var sha = null;
+      if (getRes.ok) {
+        var existing = await getRes.json();
+        sha = existing.sha;
+      } else if (getRes.status !== 404) {
+        throw new Error(await githubErrorMessage(getRes));
+      }
+
+      var body = {
+        message: "Update " + GITHUB_CONFIG.dataDir + "/" + DATASET_FILE + " (" +
+          new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC)",
+        content: utf8ToBase64(serializeRows(state.rows)),
+        branch: GITHUB_CONFIG.branch
+      };
+      if (sha) body.sha = sha;
+
+      var putRes = await githubRequest(apiUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }, token);
+
+      if (!putRes.ok) {
+        if (putRes.status === 401) clearGithubToken();
+        throw new Error(await githubErrorMessage(putRes));
+      }
+
+      storeGithubToken(token);
+      input.value = "";
+      // The rows in view now match the file, so treat them as the bundled dataset.
+      state.files = [DATASET_PATH];
+      state.source = "dataset";
+      state.baseline = { rows: state.rows.slice(), source: "dataset", files: [DATASET_PATH] };
+      renderAll();
+      closeSaveModal();
+      showNotice(
+        "Saved " + state.rows.length + " rows to " + GITHUB_CONFIG.dataDir + "/" + DATASET_FILE +
+          ". The live site updates once GitHub Pages finishes rebuilding.",
+        "success",
+        false
+      );
+    } catch (error) {
+      setSaveStatus(error.message || "Could not save to GitHub.", "error");
+    } finally {
+      confirmButton.disabled = false;
+    }
   }
 
   if (typeof document !== "undefined") {
