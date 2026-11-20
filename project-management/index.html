@@ -261,17 +261,11 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
     </div>
     <button class="secondary" id="loadFileBtn" type="button">Load selected file</button>
   </div>
-  <div class="sync-grid" style="margin-top:12px">
-    <div>
-      <label for="githubToken">GitHub token (fine-grained PAT with Contents: Read and write)</label>
-      <input type="password" id="githubToken" autocomplete="off" spellcheck="false" placeholder="github_pat_...">
-    </div>
-    <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#4d5870;height:38px;margin:0;cursor:pointer">
-      <input type="checkbox" id="rememberToken" style="width:auto"> Remember token on this device
-    </label>
-  </div>
   <div class="status" id="syncStatus" style="margin-top:12px">Pick a saved plan or start a new one when the page loads.</div>
-  <div class="sub" style="margin-top:8px">The token is kept only in this browser and is sent only to api.github.com. It is never committed. The file list can be read without a token because the repository is public.</div>
+  <div class="sub" style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span>Saving asks for a GitHub token only when needed. It is kept in this browser tab, sent only to api.github.com, and never committed. Loading and listing need no token because the repository is public.</span>
+    <button class="secondary" id="forgetToken" type="button" style="padding:4px 8px;font-size:11px">Forget saved token</button>
+  </div>
 </section>
 </main>
 
@@ -292,6 +286,21 @@ footer{text-align:center;color:#8a93a6;font-size:11px;padding:0 20px 24px}
       <button class="primary" id="loadSelectedPlan" type="button">Load selected plan</button>
     </div>
     <div class="sub" style="margin-top:10px">If the list cannot load, type the file name exactly as saved in the repository.</div>
+  </div>
+</div>
+
+<!-- Save token prompt -->
+<div class="modal-overlay" id="tokenModal">
+  <div class="modal-box" style="max-width:480px">
+    <h3>GitHub token</h3>
+    <p class="sub" style="margin-top:0">Saving writes to <strong>pingkee/Pkweb</strong>. Enter a fine-grained token with <strong>Contents: Read and write</strong>. It stays in this browser tab and is never committed.</p>
+    <label for="tokenInput">Token</label>
+    <input type="password" id="tokenInput" autocomplete="off" spellcheck="false" placeholder="github_pat_...">
+    <div class="status" id="tokenStatus" style="margin-top:12px">Loading and listing do not need a token.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="secondary" id="cancelToken" type="button">Cancel</button>
+      <button class="primary" id="saveToken" type="button">Save token and continue</button>
+    </div>
   </div>
 </div>
 
@@ -1553,20 +1562,58 @@ function safeVbaString(str) {
 
 // GitHub repository sync ---------------------------------------------------
 function getStoredToken(){
-  try{ return localStorage.getItem(GITHUB_TOKEN_KEY) || sessionStorage.getItem(GITHUB_TOKEN_KEY) || ''; }
+  try{ return sessionStorage.getItem(GITHUB_TOKEN_KEY) || ''; }
   catch(e){ return ''; }
+}
+function clearStoredToken(){
+  try{ sessionStorage.removeItem(GITHUB_TOKEN_KEY); }catch(e){}
+  try{ localStorage.removeItem(GITHUB_TOKEN_KEY); }catch(e){}
 }
 function lastSavedName(){
   try{ return localStorage.getItem(GITHUB_LAST_FILE_KEY) || ''; }
   catch(e){ return ''; }
 }
-function persistToken(){
-  const token=$('githubToken').value.trim();
-  const remember=$('rememberToken').checked;
+let pendingAfterToken=null;
+function setTokenStatus(msg,type=''){
+  const el=$('tokenStatus');
+  el.className='status '+type;
+  el.textContent=msg;
+}
+function openTokenModal(after){
+  pendingAfterToken=typeof after==='function' ? after : null;
+  $('tokenInput').value='';
+  $('tokenStatus').className='status';
+  $('tokenStatus').textContent='Loading and listing do not need a token.';
+  $('saveToken').disabled=false;
+  $('tokenModal').style.display='flex';
+  setTimeout(()=>$('tokenInput').focus(),0);
+}
+function closeTokenModal(){
+  $('tokenModal').style.display='none';
+}
+async function submitToken(){
+  const token=$('tokenInput').value.trim();
+  if(!token){ setTokenStatus('Enter a GitHub token.','error'); return; }
+  setTokenStatus('Checking token…');
+  $('saveToken').disabled=true;
   try{
-    if(remember && token) localStorage.setItem(GITHUB_TOKEN_KEY, token); else localStorage.removeItem(GITHUB_TOKEN_KEY);
-    if(token) sessionStorage.setItem(GITHUB_TOKEN_KEY, token); else sessionStorage.removeItem(GITHUB_TOKEN_KEY);
-  }catch(e){}
+    const res=await fetch('https://api.github.com/user',{
+      headers:{'Authorization':`Bearer ${token}`,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},
+      cache:'no-store'
+    });
+    if(!res.ok) throw new Error(await githubErrorMessage(res));
+    const user=await res.json();
+    try{ sessionStorage.setItem(GITHUB_TOKEN_KEY, token); }catch(e){}
+    const after=pendingAfterToken;
+    pendingAfterToken=null;
+    closeTokenModal();
+    setSyncStatus(`Using GitHub token${user && user.login ? ` for @${user.login}` : ''} in this tab.`, 'ok');
+    if(after) after();
+  }catch(err){
+    setTokenStatus(err.message || 'Could not verify the token.','error');
+  }finally{
+    $('saveToken').disabled=false;
+  }
 }
 function setSyncStatus(msg,type='',linkUrl){
   const el=$('syncStatus');
@@ -1635,7 +1682,7 @@ async function githubErrorMessage(res){
   return msg;
 }
 async function listCsvFiles(){
-  const token=$('githubToken').value.trim();
+  const token=getStoredToken();
   async function fetchList(t){
     const res=await githubRequest(`${apiContentsPath()}?ref=${GITHUB_CONFIG.branch}`,{},t);
     if(!res.ok) throw new Error(await githubErrorMessage(res));
@@ -1707,7 +1754,7 @@ async function refreshFileLists(showInModal=false, announce=false){
 async function loadCsvByName(rawName){
   const name=normalizeCsvName(rawName);
   if(!name) throw new Error('Enter a valid CSV file name.');
-  const token=$('githubToken').value.trim();
+  const token=getStoredToken();
   try{
     const res=await githubRequest(`${apiContentsPath(name)}?ref=${GITHUB_CONFIG.branch}`,{},token);
     if(res.ok){
@@ -1726,13 +1773,12 @@ async function loadCsvByName(rawName){
   return {count, source:'GitHub Pages'};
 }
 async function saveCsvToGithub(){
-  const token=$('githubToken').value.trim();
-  if(!token){ setSyncStatus('Enter a GitHub token before saving.','error'); $('githubToken').focus(); return; }
-  persistToken();
   const name=normalizeCsvName($('githubFileName').value);
   if(!name){ setSyncStatus('Enter a valid file name, e.g. roadmap_2027.csv.','error'); $('githubFileName').focus(); return; }
   $('githubFileName').value=name;
   if(!jobs.length){ setSyncStatus('There are no tasks to save.','warn'); return; }
+  const token=getStoredToken();
+  if(!token){ openTokenModal(()=>saveCsvToGithub()); return; }
   setSyncStatus(`Saving ${name} to GitHub…`);
   try{
     let sha=null;
@@ -1741,6 +1787,7 @@ async function saveCsvToGithub(){
       const data=await getRes.json();
       sha=data.sha;
     }else if(getRes.status!==404){
+      if(getRes.status===401){ clearStoredToken(); openTokenModal(()=>saveCsvToGithub()); }
       throw new Error(await githubErrorMessage(getRes));
     }
     if(sha && name!==currentCsvName){
@@ -1757,7 +1804,10 @@ async function saveCsvToGithub(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(body)
     },token);
-    if(!putRes.ok) throw new Error(await githubErrorMessage(putRes));
+    if(!putRes.ok){
+      if(putRes.status===401){ clearStoredToken(); openTokenModal(()=>saveCsvToGithub()); }
+      throw new Error(await githubErrorMessage(putRes));
+    }
     const result=await putRes.json();
     const commitUrl=(result && result.commit) ? result.commit.html_url : null;
     setCurrentCsvName(name);
@@ -1831,13 +1881,17 @@ $('loadFileBtn').addEventListener('click', async ()=>{
 $('startNewPlan').addEventListener('click', startNewPlan);
 $('loadSelectedPlan').addEventListener('click', loadSelectedPlan);
 $('startupManualFile').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); loadSelectedPlan(); } });
-$('rememberToken').addEventListener('change', persistToken);
-$('githubToken').addEventListener('change', ()=>{ persistToken(); refreshFileLists(false,false); });
+$('saveToken').addEventListener('click', submitToken);
+$('cancelToken').addEventListener('click', ()=>{ pendingAfterToken=null; closeTokenModal(); });
+$('tokenInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); submitToken(); } });
+$('forgetToken').addEventListener('click', ()=>{
+  clearStoredToken();
+  setSyncStatus('Saved GitHub token cleared from this browser tab.','ok');
+});
 
 (function initGithubSync(){
-  const stored=getStoredToken();
-  if(stored) $('githubToken').value=stored;
-  try{ $('rememberToken').checked=!!localStorage.getItem(GITHUB_TOKEN_KEY); }catch(e){}
+  // Remove a token saved by the previous version of this page.
+  try{ localStorage.removeItem(GITHUB_TOKEN_KEY); }catch(e){}
   const last=lastSavedName();
   if(last) $('githubFileName').value=last;
 })();
