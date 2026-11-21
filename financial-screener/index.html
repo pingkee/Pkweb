@@ -2219,7 +2219,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
   var DATASET_FILE = DATASET_PATH.split("/").pop();
   var GITHUB_CONFIG = { owner: "pingkee", repo: "Pkweb", branch: "gh-pages", dataDir: "financial-screener/data" };
   var GITHUB_TOKEN_KEY = "equitySegmenter.githubToken.v1";
-  var SETTINGS_KEY = "equitySegmenter.settings.v1";
+  var SETTINGS_KEY = "equitySegmenter.settings.v2";
   var DEFAULT_UNIVERSE = "Technology, Semiconductor, Software, Information Technology, Internet Content, Artificial Intelligence, Cloud, Data Center";
   var SCREEN_ORDER = ["growth", "netNet", "netGrowth"];
 
@@ -3528,10 +3528,17 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
         if (!source || typeof source !== "object") return;
         var keys = SCREENS[screen].weightKeys;
         if (source.weights && typeof source.weights === "object") {
-          keys.forEach(function (key) {
-            var value = Number(source.weights[key]);
-            if (Number.isFinite(value)) loaded[screen].weights[key] = clamp(Math.round(value), 0, 100);
+          // Only reuse saved weights when they cover every current metric. A
+          // partial set means the screen's criteria changed since the save, and
+          // carrying the old numbers over would silently skew the ranking.
+          var complete = keys.every(function (key) {
+            return typeof source.weights[key] === "number" && Number.isFinite(source.weights[key]);
           });
+          if (complete) {
+            keys.forEach(function (key) {
+              loaded[screen].weights[key] = clamp(Math.round(source.weights[key]), 0, 100);
+            });
+          }
         }
         if (screen === "growth") {
           if (typeof source.universe === "string" && source.universe.length <= 600) {
