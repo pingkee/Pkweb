@@ -1882,7 +1882,6 @@
       padding: 14px 15px;
     }
     .metrics {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px 17px;
       padding-top: 2px;
     }
@@ -1944,6 +1943,7 @@
     .method-grid { grid-template-columns: 1fr; }
     .empty { padding: 30px 18px; }
     .detail-drawer { width: 100%; border-left: 0; }
+    .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
   @media (max-width: 430px) {
@@ -2226,24 +2226,28 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
   var DEFAULT_SETTINGS = {
     activeScreen: "growth",
     growth: {
-      weights: { equity: 40, revenue: 30, peg: 20, ps: 10 },
-      revenueBasis: "yoy",
+      weights: { equity: 30, revenue: 20, peg: 15, pe: 15, ps: 10, pFcf: 10 },
       universe: DEFAULT_UNIVERSE
     },
     netNet: { weights: { liq: 60, pb: 40 } },
-    netGrowth: { weights: { equity: 40, liq: 30, pb: 20, share: 10 } }
+    netGrowth: {
+      weights: {
+        equity: 32, liq: 24, pb: 16, share: 8,
+        revenue: 5, pe: 5, ps: 5, pFcf: 5
+      }
+    }
   };
 
   var SCREENS = {
     growth: {
       name: "High Growth",
       kicker: "Growth screen",
-      rule: "Tech & internet · revenue > 0",
-      weightKeys: ["equity", "revenue", "peg", "ps"],
-      description: "Technology, internet and semiconductor businesses whose revenue is still expanding. The growth universe and positive revenue are both mandatory.",
+      rule: "Tech & internet · revenue CAGR > 0",
+      weightKeys: ["equity", "revenue", "peg", "pe", "ps", "pFcf"],
+      description: "Technology, internet and semiconductor businesses whose revenue is still compounding. The growth universe and positive revenue CAGR are both mandatory.",
       empty: {
         title: "No stocks clear the growth screen",
-        copy: "The growth universe or the positive-revenue filter removed every row. Broaden the sector and industry keywords, switch the revenue basis, or import a different CSV."
+        copy: "The growth universe or the positive revenue CAGR filter removed every row. Broaden the sector and industry keywords or import a different CSV."
       }
     },
     netNet: {
@@ -2261,7 +2265,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
       name: "Net-Growth",
       kicker: "Quality screen",
       rule: "Buybacks + positive equity growth",
-      weightKeys: ["equity", "liq", "pb", "share"],
+      weightKeys: ["equity", "liq", "pb", "share", "revenue", "pe", "ps", "pFcf"],
       description: "Companies compounding shareholder equity while shrinking their share count. Positive equity growth and a falling 5-year share count are both required.",
       empty: {
         title: "No stocks clear the net-growth screen",
@@ -2504,7 +2508,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
     var has = function (field) {
       return rows.some(function (row) { return isNum(row[field]); });
     };
-    if (!has("revenueYoy") && !has("revenueCagr")) missing.push("Revenue growth");
+    if (!has("revenueCagr")) missing.push("Revenue CAGR");
     if (!has("equityGrowth")) missing.push("Shareholder equity growth");
     if (!has("shareChange")) missing.push("Share count growth");
     if (!has("liquidationValue") || !has("marketCap")) missing.push("Liquidation value / market cap");
@@ -2584,21 +2588,58 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
       valid: function (value) { return value > 0; }
     };
 
+    var pe = {
+      key: "pe",
+      label: "P/E",
+      short: "P/E",
+      controlLabel: "Price / earnings",
+      value: function (row) { return row.pe; },
+      dir: "low",
+      format: "multiple",
+      hint: "Lower is better · positive values only",
+      valid: function (value) { return value > 0; }
+    };
+
+    var ps = {
+      key: "ps",
+      label: "P/S",
+      short: "P/S",
+      controlLabel: "Price / sales",
+      value: function (row) { return row.ps; },
+      dir: "low",
+      format: "multiple",
+      hint: "Lower is better · positive values only",
+      valid: function (value) { return value > 0; }
+    };
+
+    var pFcf = {
+      key: "pFcf",
+      label: "P/FCF",
+      short: "P/FCF",
+      controlLabel: "Price / free cash flow",
+      value: function (row) { return row.pFcf; },
+      dir: "low",
+      format: "multiple",
+      hint: "Lower is better · positive values only",
+      valid: function (value) { return value > 0; }
+    };
+
+    var revenueCagr = {
+      key: "revenue",
+      label: "Revenue CAGR",
+      short: "Rev",
+      controlLabel: "Revenue CAGR",
+      value: function (row) { return row.revenueCagr; },
+      period: function (row) { return row.revenuePeriod; },
+      dir: "high",
+      format: "pct",
+      hint: "Higher is better"
+    };
+
     if (screen === "growth") {
-      var useCagr = settings.growth.revenueBasis === "cagr";
       return [
         equity,
-        {
-          key: "revenue",
-          label: useCagr ? "Revenue CAGR" : "Revenue YoY",
-          short: "Rev",
-          controlLabel: "Revenue growth",
-          value: function (row) { return useCagr ? row.revenueCagr : row.revenueYoy; },
-          period: useCagr ? function (row) { return row.revenuePeriod; } : null,
-          dir: "high",
-          format: "pct",
-          hint: "Must be positive · higher is better"
-        },
+        revenueCagr,
         {
           key: "peg",
           label: "PEG",
@@ -2610,17 +2651,9 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
           hint: "Lower is better · positive values only",
           valid: function (value) { return value > 0; }
         },
-        {
-          key: "ps",
-          label: "P/S",
-          short: "P/S",
-          controlLabel: "Price / sales",
-          value: function (row) { return row.ps; },
-          dir: "low",
-          format: "multiple",
-          hint: "Lower is better · positive values only",
-          valid: function (value) { return value > 0; }
-        }
+        pe,
+        ps,
+        pFcf
       ];
     }
 
@@ -2642,7 +2675,11 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
         dir: "low",
         format: "share",
         hint: "Lower is better · negative means buyback"
-      }
+      },
+      revenueCagr,
+      pe,
+      ps,
+      pFcf
     ];
   }
 
@@ -2660,13 +2697,10 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
     var reasons = [];
 
     if (screen === "growth") {
-      var useCagr = settings.growth.revenueBasis === "cagr";
-      var revenue = useCagr ? row.revenueCagr : row.revenueYoy;
-      var label = useCagr ? "Revenue CAGR" : "Revenue YoY";
-      if (!isNum(revenue)) {
-        reasons.push(label + " unavailable");
-      } else if (!(revenue > 0)) {
-        reasons.push(label + " is not positive");
+      if (!isNum(row.revenueCagr)) {
+        reasons.push("Revenue CAGR unavailable");
+      } else if (!(row.revenueCagr > 0)) {
+        reasons.push("Revenue CAGR is not positive");
       }
     }
 
@@ -2900,10 +2934,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
   }
 
   function gateChips(screen, settings) {
-    if (screen === "growth") {
-      var basis = settings.growth.revenueBasis === "cagr" ? "CAGR" : "YoY";
-      return ["Growth universe", "Revenue " + basis + " > 0"];
-    }
+    if (screen === "growth") return ["Growth universe", "Revenue CAGR > 0"];
     if (screen === "netNet") return ["Any sector", "No hard filter"];
     return ["Equity growth > 0", "5Y share change < 0"];
   }
@@ -2977,7 +3008,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
         '<div class="company-line"><h3>' + esc(row.company || row.ticker) + '</h3><span class="ticker">' + esc(row.ticker) + "</span>" + noteFlag + "</div>" +
         '<p class="identity-meta">' + metaBits.map(esc).join(" / ") + "</p>" +
       "</div>" +
-      '<div class="metrics" style="--cols:' + result.displayCriteria.length + '">' + metrics + "</div>" +
+      '<div class="metrics" style="--cols:' + Math.min(result.displayCriteria.length, 4) + '">' + metrics + "</div>" +
       '<div class="score-cell">' +
         '<div class="score-value">' + entry.score.toFixed(1) + "</div>" +
         '<div class="score-caption">Score / 100</div>' +
@@ -3288,10 +3319,7 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
     document.getElementById("ranked-count").textContent = String(result.ranked.length);
     document.getElementById("excluded-count").textContent = countSubline(result);
 
-    var basisLabel = screen === "growth"
-      ? " · revenue " + (state.settings.growth.revenueBasis === "cagr" ? "CAGR" : "YoY")
-      : "";
-    document.getElementById("list-caption").textContent = "Composite percentile" + basisLabel + " · highest first";
+    document.getElementById("list-caption").textContent = "Composite percentile · highest first";
     document.getElementById("weight-summary").textContent = weightSummary(result);
     document.getElementById("list-hint").hidden = result.ranked.length === 0;
 
@@ -3412,14 +3440,6 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
         '<div class="field-label"><label for="universe-input">Growth universe</label><button type="button" class="text-btn" id="reset-universe">Reset</button></div>' +
         '<textarea id="universe-input" rows="4" spellcheck="false" aria-describedby="universe-hint">' + esc(settings.universe) + "</textarea>" +
         '<p class="hint" id="universe-hint">Matches Sector or Industry, case-insensitive. Separate keywords with commas. Clear the field to include every sector.</p>' +
-      "</div>" +
-      '<div class="field">' +
-        '<div class="field-label" id="basis-label">Revenue growth basis</div>' +
-        '<div class="segmented" role="group" aria-labelledby="basis-label">' +
-          '<button type="button" data-basis="yoy" aria-pressed="' + (settings.revenueBasis === "yoy" ? "true" : "false") + '">Latest YoY</button>' +
-          '<button type="button" data-basis="cagr" aria-pressed="' + (settings.revenueBasis === "cagr" ? "true" : "false") + '">CAGR</button>' +
-        "</div>" +
-        '<p class="hint">The chosen measure must be positive to enter the screen.</p>' +
       "</div>";
     }
 
@@ -3514,9 +3534,6 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
           });
         }
         if (screen === "growth") {
-          if (source.revenueBasis === "yoy" || source.revenueBasis === "cagr") {
-            loaded.growth.revenueBasis = source.revenueBasis;
-          }
           if (typeof source.universe === "string" && source.universe.length <= 600) {
             loaded.growth.universe = source.universe;
           }
@@ -3732,17 +3749,6 @@ ORCL,Oracle Corporation,Technology,Software - Infrastructure,USD,USD,17.3307,5.4
 
     controls.addEventListener("click", function (event) {
       var target = event.target;
-
-      var basisButton = target.closest("[data-basis]");
-      if (basisButton) {
-        state.settings.growth.revenueBasis = basisButton.dataset.basis;
-        controls.querySelectorAll("[data-basis]").forEach(function (button) {
-          button.setAttribute("aria-pressed", button === basisButton ? "true" : "false");
-        });
-        renderAll();
-        saveSettings();
-        return;
-      }
 
       if (target.closest("#reset-universe")) {
         state.settings.growth.universe = DEFAULT_UNIVERSE;
