@@ -695,7 +695,7 @@
     /* Projects */
     .projects-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
     }
     .project-card {
@@ -729,9 +729,11 @@
     .art-mobile { background: linear-gradient(135deg, #e7ecfb, #f7f6f2); }
     .art-web { background: linear-gradient(135deg, #f3eddf, #f7f6f2); }
     .art-data { background: linear-gradient(135deg, #e2efe7, #f7f6f2); }
+    .art-feedback { background: linear-gradient(135deg, #eae7f6, #f7f6f2); }
     :root[data-theme="dark"] .art-mobile { background: linear-gradient(135deg, #162447, #111b2d); }
     :root[data-theme="dark"] .art-web { background: linear-gradient(135deg, #2a2216, #111b2d); }
     :root[data-theme="dark"] .art-data { background: linear-gradient(135deg, #172a20, #111b2d); }
+    :root[data-theme="dark"] .art-feedback { background: linear-gradient(135deg, #241f3d, #111b2d); }
     .project-art svg { position: relative; width: 62px; height: 62px; color: var(--accent); opacity: .9; }
     .project-body { display: flex; flex-direction: column; flex: 1; padding: 23px; }
     .project-kicker {
@@ -1333,6 +1335,25 @@
               </ul>
               <div class="project-links">
                 <a href="/financial-screener/">Open screener <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+          </article>
+
+          <article class="project-card" data-reveal>
+            <div class="project-art art-feedback" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 21l2.1-5.4A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8.5 10h7M8.5 14h4.5"/></svg>
+            </div>
+            <div class="project-body">
+              <p class="project-kicker">Feedback tool</p>
+              <h3>Leadership Feedback</h3>
+              <p>A short, low-friction form for candid feedback on how I lead and manage &mdash; eight rated areas, free-text prompts, and submissions saved through the GitHub API.</p>
+              <ul class="tags" aria-label="Technologies">
+                <li class="tag">JavaScript</li>
+                <li class="tag">GitHub API</li>
+                <li class="tag">UX</li>
+              </ul>
+              <div class="project-links">
+                <a href="/project-management/feedback/">Share feedback <span aria-hidden="true">→</span></a>
               </div>
             </div>
           </article>
