@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leadership feedback — Ng Ping Kee</title>
+<meta name="description" content="Share honest feedback on how Ng Ping Kee leads and manages. Takes about three minutes, and your name is optional.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f7f6f2" id="themeColor">
+
+<link rel="icon" href="/assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem('npk-theme');
+      var systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = (stored === 'light' || stored === 'dark') ? stored : (systemDark ? 'dark' : 'light');
+      document.documentElement.dataset.theme = theme;
+    } catch (e) {
+      document.documentElement.dataset.theme = 'light';
+    }
+  })();
+</script>
+
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --surface-2: #fbfaf7;
+    --ink: #101a2c;
+    --ink-soft: #2b3a52;
+    --muted: #5f6b7d;
+    --line: #e4e0d6;
+    --line-strong: #d2ccbe;
+    --accent: #1f3fa8;
+    --accent-strong: #172f7f;
+    --accent-soft: #e9edfb;
+    --on-accent: #ffffff;
+    --gold: #a96f22;
+    --live: #2f8f68;
+    --warn-soft: #fdf4e3;
+    --warn-line: #ecd9b4;
+    --warn-ink: #8a5a10;
+    --alert-soft: #fbeceb;
+    --alert-line: #f0cfcd;
+    --alert-ink: #9c2f2a;
+    --ok-soft: #eaf5ef;
+    --ok-line: #c8e6d7;
+    --ok-ink: #1d6b4d;
+    --header-bg: rgba(247, 246, 242, .84);
+    --glow: rgba(31, 63, 168, .10);
+    --glow-warm: rgba(169, 111, 34, .07);
+    --focus-ring: rgba(31, 63, 168, .16);
+    --shadow: 0 1px 2px rgba(16, 26, 44, .05), 0 14px 40px rgba(16, 26, 44, .07);
+    --shadow-sm: 0 1px 2px rgba(16, 26, 44, .05);
+    --radius: 20px;
+    --radius-sm: 12px;
+    --wrap: 1080px;
+    --header-h: 66px;
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0b1220;
+    --surface: #111b2d;
+    --surface-2: #0f1828;
+    --ink: #e8eefb;
+    --ink-soft: #c9d5ea;
+    --muted: #9aa8c0;
+    --line: #20304a;
+    --line-strong: #2c405f;
+    --accent: #8fa8ff;
+    --accent-strong: #b4c4ff;
+    --accent-soft: #162447;
+    --on-accent: #08101f;
+    --gold: #e0b46a;
+    --live: #5fd3a4;
+    --warn-soft: #2a2114;
+    --warn-line: #4a3a1e;
+    --warn-ink: #e6c487;
+    --alert-soft: #2c1718;
+    --alert-line: #4d2629;
+    --alert-ink: #f0a9a3;
+    --ok-soft: #12251d;
+    --ok-line: #204434;
+    --ok-ink: #8fd9b6;
+    --header-bg: rgba(11, 18, 32, .82);
+    --glow: rgba(143, 168, 255, .10);
+    --glow-warm: rgba(224, 180, 106, .05);
+    --focus-ring: rgba(143, 168, 255, .22);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .25), 0 16px 44px rgba(0, 0, 0, .28);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 20px); }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font: 400 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(900px 420px at 86% -10%, var(--glow), transparent 65%),
+      radial-gradient(720px 380px at 4% 2%, var(--glow-warm), transparent 70%),
+      var(--bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .skip-link {
+    position: absolute; left: 16px; top: -70px; z-index: 100;
+    background: var(--accent); color: var(--on-accent);
+    padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 650;
+  }
+  .skip-link:focus { top: 12px; text-decoration: none; }
+
+  .wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--header-bg);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner { height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 11px; color: var(--ink); }
+  .brand:hover { text-decoration: none; }
+  .brand-mark {
+    width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-sm);
+  }
+  .brand-mark img { width: 26px; height: 26px; }
+  .brand-text strong { display: block; font-size: 15px; line-height: 1.2; letter-spacing: -.01em; }
+  .brand-text small { display: block; font-size: 11.5px; color: var(--muted); font-weight: 500; }
+  .top-links { display: flex; align-items: center; gap: 4px; }
+  .top-links a { padding: 8px 12px; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); }
+  .top-links a:hover { background: var(--surface); color: var(--ink); text-decoration: none; }
+  .theme-toggle {
+    display: grid; place-items: center; width: 38px; height: 38px; margin-left: 4px;
+    background: transparent; border: 1px solid transparent; border-radius: 10px;
+    color: var(--ink-soft); cursor: pointer;
+  }
+  .theme-toggle:hover { background: var(--surface); border-color: var(--line); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  :root[data-theme="dark"] .icon-moon { display: none; }
+  :root:not([data-theme="dark"]) .icon-sun { display: none; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 52px 0 32px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold);
+    margin: 0;
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 2px; border-radius: 2px; background: var(--gold); }
+  h1 {
+    font: 600 clamp(34px, 5.2vw, 52px)/1.08 "Playfair Display", Georgia, serif;
+    letter-spacing: -.02em; margin: 16px 0 16px; max-width: 19ch;
+  }
+  .lede { font-size: 17.5px; line-height: 1.6; color: var(--ink-soft); max-width: 62ch; margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 0; padding: 0; list-style: none; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600; color: var(--ink-soft);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px;
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); flex: 0 0 auto; }
+
+  /* ---------- Layout ---------- */
+  .layout {
+    display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 26px;
+    align-items: start; padding-bottom: 72px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  /* ---------- Form ---------- */
+  .form-shell { padding: 0; overflow: hidden; }
+  .draft-note {
+    display: none; align-items: center; justify-content: space-between; gap: 12px;
+    margin: 18px 26px 0; padding: 10px 12px; border-radius: 10px;
+    background: var(--accent-soft); color: var(--accent-strong); font-size: 12.5px;
+  }
+  .draft-note.show { display: flex; }
+  .draft-note button {
+    background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: inherit;
+    text-decoration: underline; cursor: pointer;
+  }
+  .form-shell.sent .draft-note { display: none; }
+  .form-shell.sent .feedback-form { display: none; }
+
+  .block { padding: 26px; }
+  .block + .block { border-top: 1px solid var(--line); }
+  .block-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 20px; }
+  .step {
+    flex: 0 0 auto; width: 30px; height: 30px; margin-top: 2px;
+    display: grid; place-items: center; border-radius: 9px;
+    background: var(--accent-soft); color: var(--accent-strong);
+    font-size: 12px; font-weight: 800; letter-spacing: .02em;
+  }
+  .block-head h2 { font-size: 18px; line-height: 1.25; letter-spacing: -.015em; margin: 0 0 5px; }
+  .hint { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+  /* Rating matrix */
+  .rate-head {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); gap: 16px;
+    padding: 0 0 9px; margin-bottom: 4px; border-bottom: 1px solid var(--line);
+  }
+  .rate-head-label {
+    align-self: center; font-size: 10.5px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .rate-head-scale {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+    text-align: center; font-size: 10.5px; font-weight: 700; color: var(--muted);
+  }
+  .rate-rows { display: flex; flex-direction: column; }
+  .rate-row {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); gap: 16px;
+    align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line);
+  }
+  .rate-row:last-child { border-bottom: 0; }
+  .rate-label { font-size: 14px; line-height: 1.35; font-weight: 500; color: var(--ink-soft); }
+  .rate-scale { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .opt { position: relative; display: block; }
+  .opt input {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    margin: 0; opacity: 0; cursor: pointer; z-index: 2;
+  }
+  .opt span {
+    display: grid; place-items: center; height: 34px;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
+    font-size: 12.5px; font-weight: 650; color: var(--ink-soft);
+    transition: background .14s ease, border-color .14s ease, color .14s ease;
+  }
+  .opt:hover span { border-color: var(--line-strong); background: var(--surface); }
+  .opt input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .opt input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .opt.na input:checked + span { background: var(--ink-soft); border-color: var(--ink-soft); }
+
+  /* Fields */
+  .field { margin-top: 18px; }
+  .field:first-child { margin-top: 0; }
+  .field > label {
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+    font-size: 13.5px; font-weight: 650; color: var(--ink); margin-bottom: 7px;
+  }
+  .tag-opt, .tag-req {
+    margin-left: 7px; padding: 2px 7px; border-radius: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+  }
+  .tag-req { background: var(--accent-soft); border-color: transparent; color: var(--accent-strong); }
+
+  textarea, input[type="text"], input[type="password"], select {
+    width: 100%; font: inherit; font-size: 14.5px; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
+    padding: 11px 13px; outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  textarea { resize: vertical; min-height: 88px; line-height: 1.55; }
+  textarea::placeholder, input::placeholder { color: var(--muted); opacity: .75; }
+  textarea:focus, input:focus, select:focus {
+    border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3.5px var(--focus-ring);
+  }
+  [aria-invalid="true"] { border-color: var(--alert-ink) !important; box-shadow: 0 0 0 3.5px var(--alert-soft) !important; }
+  .counter { margin-top: 5px; font-size: 11px; color: var(--muted); text-align: right; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field-grid .field { margin-top: 0; }
+  .field-grid .full { grid-column: 1 / -1; }
+
+  /* Token + submit */
+  details.token-help {
+    margin-top: 18px; padding: 0 14px;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
+  }
+  details.token-help summary {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 12px 0; font-size: 13px; font-weight: 650; color: var(--ink-soft); list-style: none;
+  }
+  details.token-help summary::-webkit-details-marker { display: none; }
+  details.token-help summary::before { content: "+"; width: 13px; font-weight: 800; color: var(--accent); }
+  details.token-help[open] summary::before { content: "–"; }
+  .details-body { padding: 0 0 15px; font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); }
+  .details-body ol { margin: 0 0 8px; padding-left: 18px; }
+  .details-body li { margin-bottom: 7px; }
+  code {
+    background: var(--accent-soft); color: var(--accent-strong);
+    border-radius: 5px; padding: 1px 5px; font-size: 11.5px; word-break: break-word;
+  }
+  .token-row { display: flex; gap: 8px; }
+  .token-row input { flex: 1 1 auto; min-width: 0; }
+  .ghost-btn {
+    flex: 0 0 auto; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--surface-2); color: var(--ink-soft);
+    font: inherit; font-size: 13px; font-weight: 650; cursor: pointer;
+  }
+  .ghost-btn:hover { background: var(--surface); border-color: var(--line-strong); }
+
+  .submit-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 20px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    padding: 12px 20px; border: 1px solid transparent; border-radius: 12px;
+    font: inherit; font-size: 14.5px; font-weight: 650; cursor: pointer;
+    transition: background .14s ease, border-color .14s ease, transform .14s ease, box-shadow .14s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:hover { text-decoration: none; }
+  .btn-primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 6px 18px rgba(31, 63, 168, .22); }
+  .btn-primary:hover { background: var(--accent-strong); }
+  .btn-primary:disabled { opacity: .6; cursor: progress; box-shadow: none; }
+  .btn-quiet { background: transparent; border-color: var(--line); color: var(--ink-soft); }
+  .btn-quiet:hover { background: var(--surface-2); border-color: var(--line-strong); }
+  .clean-link {
+    background: none; border: 0; padding: 0; font: inherit; font-size: 12.5px; font-weight: 600;
+    color: var(--muted); cursor: pointer; text-decoration: underline;
+  }
+  .clean-link:hover { color: var(--ink); }
+
+  .status { display: none; margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; border: 1px solid transparent; }
+  .status.show { display: block; }
+  .status.info { background: var(--surface-2); border-color: var(--line); color: var(--ink-soft); }
+  .status.warn { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn-ink); }
+  .status.error { background: var(--alert-soft); border-color: var(--alert-line); color: var(--alert-ink); }
+  .status.ok { background: var(--ok-soft); border-color: var(--ok-line); color: var(--ok-ink); }
+  .status a { color: inherit; font-weight: 650; text-decoration: underline; }
+
+  /* Success */
+  .success { display: none; padding: 40px 26px 44px; text-align: center; }
+  .form-shell.sent .success { display: block; }
+  .success-icon {
+    width: 58px; height: 58px; margin: 0 auto 18px; display: grid; place-items: center;
+    border-radius: 50%; background: var(--ok-soft); color: var(--ok-ink);
+  }
+  .success h2 { font: 600 28px/1.2 "Playfair Display", Georgia, serif; letter-spacing: -.01em; margin: 0 0 10px; }
+  .success p { max-width: 46ch; margin: 0 auto 22px; font-size: 15px; color: var(--ink-soft); }
+  .success .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+  /* ---------- Aside ---------- */
+  .aside { display: flex; flex-direction: column; gap: 16px; position: sticky; top: calc(var(--header-h) + 20px); }
+  .side-card { padding: 20px; }
+  .side-card h2 { margin: 0 0 10px; font-size: 14.5px; letter-spacing: -.005em; }
+  .side-card p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+  .side-card p:last-child { margin-bottom: 0; }
+  .fine { font-size: 11.5px !important; color: var(--muted) !important; }
+  .notice {
+    margin: 12px 0; padding: 11px 12px; border-radius: 11px;
+    background: var(--warn-soft); border: 1px solid var(--warn-line); color: var(--warn-ink);
+    font-size: 12.5px; line-height: 1.5;
+  }
+  .notice strong { display: block; margin-bottom: 3px; font-size: 12.5px; }
+  .side-link {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-top: 8px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px;
+    background: var(--surface-2); color: var(--ink); font-size: 13px; font-weight: 600;
+  }
+  .side-link:hover { background: var(--surface); border-color: var(--line-strong); text-decoration: none; }
+  .side-link .arrow { color: var(--muted); }
+
+  /* ---------- Footer ---------- */
+  .site-footer { border-top: 1px solid var(--line); padding: 24px 0; }
+  .footer-inner {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center;
+    font-size: 12.5px; color: var(--muted);
+  }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 16px; }
+  .footer-links a { color: var(--muted); }
+  .footer-links a:hover { color: var(--ink); text-decoration: none; }
+
+  @media (max-width: 960px) {
+    .layout { grid-template-columns: 1fr; }
+    .aside { position: static; flex-direction: row; flex-wrap: wrap; }
+    .aside .side-card { flex: 1 1 280px; }
+  }
+  @media (max-width: 700px) {
+    .rate-head { grid-template-columns: 1fr; gap: 4px; padding-bottom: 8px; }
+    .rate-row { grid-template-columns: 1fr; gap: 8px; padding: 12px 0; }
+    .opt span { height: 38px; }
+  }
+  @media (max-width: 640px) {
+    .field-grid { grid-template-columns: 1fr; }
+    .block { padding: 20px 16px; }
+    .draft-note { margin: 14px 16px 0; }
+    .success { padding: 32px 16px 36px; }
+    .hero { padding: 36px 0 24px; }
+    .top-links a.top-home { display: none; }
+    .brand-text small { display: none; }
+  }
+  @media (max-width: 520px) {
+    .wrap { padding: 0 16px; }
+    .card { border-radius: 16px; }
+    .lede { font-size: 16px; }
+    .layout { gap: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/" aria-label="Ng Ping Kee — home">
+      <span class="brand-mark"><img src="/K_logo.png" alt="" width="26" height="26"></span>
+      <span class="brand-text">
+        <strong>Ng Ping Kee</strong>
+        <small>Leadership feedback</small>
+      </span>
+    </a>
+    <nav class="top-links" aria-label="Site">
+      <a href="/project-management/">Planner</a>
+      <a class="top-home" href="/">Home</a>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Project management · Feedback</p>
+      <h1>Feedback on my leadership and management</h1>
+      <p class="lede">I want to get better at leading and managing the people I work with. If we&rsquo;ve worked together, I&rsquo;d value your honest view &mdash; what&rsquo;s working, what isn&rsquo;t, and what you&rsquo;d change. It takes about three minutes, and your name is optional.</p>
+      <ul class="chips">
+        <li class="chip"><span class="dot" aria-hidden="true"></span>About 3 minutes</li>
+        <li class="chip">Name optional</li>
+        <li class="chip">Auto-saves as you type</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="wrap layout">
+    <noscript>
+      <div class="card" style="padding:20px;grid-column:1/-1">
+        <p style="margin:0">This page needs JavaScript to send feedback. If it&rsquo;s switched off, please <a href="mailto:pingkee.ng@gmail.com?subject=Leadership%20feedback">email me instead</a>.</p>
+      </div>
+    </noscript>
+
+    <div class="card form-shell" id="formShell">
+      <div class="draft-note" id="draftNote">
+        <span>Draft restored from this browser.</span>
+        <button type="button" id="clearDraft">Start fresh</button>
+      </div>
+
+      <form class="feedback-form" id="feedbackForm" novalidate>
+        <!-- 01 -->
+        <section class="block" aria-labelledby="rate-title">
+          <div class="block-head">
+            <span class="step" aria-hidden="true">01</span>
+            <div>
+              <h2 id="rate-title">How I lead</h2>
+              <p class="hint">Rate what you&rsquo;ve actually seen. Skip anything you haven&rsquo;t observed &mdash; 1 means needs work, 5 means excellent.</p>
+            </div>
+          </div>
+
+          <div class="rate-head" aria-hidden="true">
+            <span class="rate-head-label">Area</span>
+            <div class="rate-head-scale">
+              <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>N/A</span>
+            </div>
+          </div>
+
+          <div class="rate-rows">
+            <div class="rate-row">
+              <span class="rate-label" id="lbl-direction">Clear direction and priorities</span>
+              <div class="rate-scale" role="radiogroup" aria-labelledby="lbl-direction">
+                <label class="opt"><input type="radio" name="rate-direction" value="1" aria-label="Clear direction and priorities: 1, needs work"><span>1</span></label>
+                <label class="opt"><input type="radio" name="rate-direction" value="2" aria-label="Clear direction and priorities: 2"><span>2</span></label>
+                <label class="opt"><input type="radio" name="rate-direction" value="3" aria-label="Clear direction and priorities: 3"><span>3</span></label>
+                <label class="opt"><input type="radio" name="rate-direction" value="4" aria-label="Clear direction and priorities: 4"><span>4</span></label>
+                <label class="opt"><input type="radio" name="rate-direction" value="5" aria-label="Clear direction and priorities: 5, excellent"><span>5</span></label>
+                <label class="opt na"><input type="radio" name="rate-direction" value="na" aria-label="Clear direction and priorities: not observed"><span>N/A</span></label>
+              </div>
+            </div>
+
+            <div class="rate-row">
+              <span class="rate-label" id="lbl-communication">Communication &mdash; timely, honest, two-way</span>
+              <div class="rate-scale" role="radiogroup" aria-labelledby="lbl-communication">
+                <label class="opt"><input type="radio" name="rate-communication" value="1" aria-label="Communication: 1, needs work"><span>1</span></label>
+                <label class="opt"><input type="radio" name="rate-communication" value="2" aria-label="Communication: 2"><span>2</span></label>
+                <label class="opt"><input type="radio" name="rate-communication" value="3" aria-label="Communication: 3"><span>3</span></label>
+                <label class="opt"><input type="radio" name="rate-communication" value="4" aria-label="Communication: 4"><span>4</span></label>
+                <label class="opt"><input type="radio" name="rate-communication" value="5" aria-label="Communication: 5, excellent"><span>5</span></label>
+                <label class="opt na"><input type="radio" name="rate-communication" value="na" aria-label="Communication: not observed"><span>N/A</span></label>
+              </div>
+            </div>
+
+            <div class="rate-row">
+              <span class="rate-label" id="lbl-coaching">Coaching and support for growth</span>
+              <div class="rate-scale" role="radiogroup" aria-labelledby="lbl-coaching">
+                <label class="opt"><input type="radio" name="rate-coaching" value="1" aria-label="Coaching and support for growth: 1, needs work"><span>1</span></label>
+                <label class="opt"><input type="radio" name="rate-coaching" value="2" aria-label="Coaching and support for growth: 2"><span>2</span></label>
+                <label class="opt"><input type="radio" name="rate-coaching" value="3" aria-label="Coaching and support for growth: 3"><span>3</span></label>
+                <label class="opt"><input type="radio" name="rate-coaching" value="4" aria-label="Coaching and support for growth: 4"><span>4</span></label>
+                <label class="opt"><input type="radio" name="rate-coaching" value="5" aria-label="Coaching and support for growth: 5, excellent"><span>5</span></label>
+                <label class="opt na"><input type="radio" name="rate-coaching" value="na" aria-label="Coaching and support for growth: not observed"><span>N/A</span></label>
+              </div>
+            </div>
+
+            <div class="rate-row">
+              <span class="rate-label" id="lbl-decisions">Decision-making and problem solving</span>
+              <div class="rate-scale" role="radiogroup" aria-labelledby="lbl-decisions">
+                <label class="opt"><input type="radio" name="rate-decisions" value="1" aria-label="Decision-making and problem solving: 1, needs work"><span>1</span></label>
+                <label class="opt"><input type="radio" name="rate-decisions" value="2" aria-label="Decision-making and problem solving: 2"><span>2</span></label>
+                <label class="opt"><input type="radio" name="rate-decisions" value="3" aria-label="Decision-making and problem solving: 3"><span>3</span></label>
+                <label class="opt"><input type="radio" name="rate-decisions" value="4" aria-label="Decision-making and problem solving: 4"><span>4</span></label>
+                <label class="opt"><input type="radio" name="rate-decisions" value="5" aria-label="Decision-making and problem solving: 5, excellent"><span>5</span></label>
+                <label class="opt na"><input type="radio" name="rate-decisions" value="na" aria-label="Decision-making and problem solving: not observed"><span>N/A</span></label>
+              </div>
+            </div>
+
+            <div class="rate-row">
+              <span class="rate-label" id="lbl-fairness">Fairness, respect, and inclusion</span>
+              <div class="rate-scale" role="radiogroup" aria-labelledby="lbl-fairness">
+                <label class="opt"><input type="radio" name="rate-fairness" value="1" aria-label="Fairness, respect, and inclusion: 1, needs work"><span>1</span></label>
+                <label class="opt"><input type="radio" name="rate-fairness" value="2" aria-label="Fairness, respect, and inclusion: 2"><span>2</span></label>
+                <label class="opt"><input type="radio" name="rate-fairness" value="3" aria-label="Fairness, respect, and inclusion: 3"><span>3</span></label>
+                <label class="opt"><input type="radio" name="rate-fairness" value="4" aria-label="Fairness, respect, and inclusion: 4"><span>4</span></label>
+                <label class="opt"><input type="radio" name="rate-fairness" value="5" aria-label="Fairness, respect, and inclusion: 5, excellent"><span>5</span></label>
+                <label class="opt na"><input type="radio" name="rate-fairness" value="na" aria-label="Fairness, respect, and inclusion: not observed"><span>N/A</span></label>
+              </div>
+            </div>
+
+            <div class="rate-row">
+              <span class="rate-label" id="lbl-feedback">Feedback and recognition</span>
+              <div class="rate-scale" role="radiogroup" aria-labelledby="lbl-feedback">
+                <label class="opt"><input type="radio" name="rate-feedback" value="1" aria-label="Feedback and recognition: 1, needs work"><span>1</span></label>
+                <label class="opt"><input type="radio" name="rate-feedback" value="2" aria-label="Feedback and recognition: 2"><span>2</span></label>
+                <label class="opt"><input type="radio" name="rate-feedback" value="3" aria-label="Feedback and recognition: 3"><span>3</span></label>
+                <label class="opt"><input type="radio" name="rate-feedback" value="4" aria-label="Feedback and recognition: 4"><span>4</span></label>
+                <label class="opt"><input type="radio" name="rate-feedback" value="5" aria-label="Feedback and recognition: 5, excellent"><span>5</span></label>
+                <label class="opt na"><input type="radio" name="rate-feedback" value="na" aria-label="Feedback and recognition: not observed"><span>N/A</span></label>
+              </div>
+            </div>
+
+            <div class="rate-row">
+              <span class="rate-label" id="lbl-planning">Planning workloads and protecting focus</span>
+              <div class="rate-scale" role="radiogroup" aria-labelledby="lbl-planning">
+                <label class="opt"><input type="radio" name="rate-planning" value="1" aria-label="Planning workloads and protecting focus: 1, needs work"><span>1</span></label>
+                <label class="opt"><input type="radio" name="rate-planning" value="2" aria-label="Planning workloads and protecting focus: 2"><span>2</span></label>
+                <label class="opt"><input type="radio" name="rate-planning" value="3" aria-label="Planning workloads and protecting focus: 3"><span>3</span></label>
+                <label class="opt"><input type="radio" name="rate-planning" value="4" aria-label="Planning workloads and protecting focus: 4"><span>4</span></label>
+                <label class="opt"><input type="radio" name="rate-planning" value="5" aria-label="Planning workloads and protecting focus: 5, excellent"><span>5</span></label>
+                <label class="opt na"><input type="radio" name="rate-planning" value="na" aria-label="Planning workloads and protecting focus: not observed"><span>N/A</span></label>
+              </div>
+            </div>
+
+            <div class="rate-row">
+              <span class="rate-label" id="lbl-blockers">Removing blockers and escalating</span>
+              <div class="rate-scale" role="radiogroup" aria-labelledby="lbl-blockers">
+                <label class="opt"><input type="radio" name="rate-blockers" value="1" aria-label="Removing blockers and escalating: 1, needs work"><span>1</span></label>
+                <label class="opt"><input type="radio" name="rate-blockers" value="2" aria-label="Removing blockers and escalating: 2"><span>2</span></label>
+                <label class="opt"><input type="radio" name="rate-blockers" value="3" aria-label="Removing blockers and escalating: 3"><span>3</span></label>
+                <label class="opt"><input type="radio" name="rate-blockers" value="4" aria-label="Removing blockers and escalating: 4"><span>4</span></label>
+                <label class="opt"><input type="radio" name="rate-blockers" value="5" aria-label="Removing blockers and escalating: 5, excellent"><span>5</span></label>
+                <label class="opt na"><input type="radio" name="rate-blockers" value="na" aria-label="Removing blockers and escalating: not observed"><span>N/A</span></label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 -->
+        <section class="block" aria-labelledby="words-title">
+          <div class="block-head">
+            <span class="step" aria-hidden="true">02</span>
+            <div>
+              <h2 id="words-title">In your words</h2>
+              <p class="hint">Specific examples are far more useful to me than general impressions. Nothing here is shared beyond me.</p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="working">What&rsquo;s working well? <span class="tag-opt">Optional</span></label>
+            <textarea id="working" maxlength="2000" rows="3" placeholder="What should I keep doing?"></textarea>
+            <div class="counter"><span data-for="working">0</span>/2000</div>
+          </div>
+
+          <div class="field">
+            <label for="improve">Where would you like to see improvement? <span class="tag-req">Most helpful</span></label>
+            <textarea id="improve" maxlength="2000" rows="4" placeholder="Be specific &mdash; what didn&rsquo;t work, and what would have worked better?"></textarea>
+            <div class="counter"><span data-for="improve">0</span>/2000</div>
+          </div>
+
+          <div class="field">
+            <label for="suggestion">A specific example or suggestion <span class="tag-opt">Optional</span></label>
+            <textarea id="suggestion" maxlength="2000" rows="3" placeholder="A situation I handled badly, or a change you&rsquo;d like to see in how we work."></textarea>
+            <div class="counter"><span data-for="suggestion">0</span>/2000</div>
+          </div>
+        </section>
+
+        <!-- 03 -->
+        <section class="block" aria-labelledby="about-title">
+          <div class="block-head">
+            <span class="step" aria-hidden="true">03</span>
+            <div>
+              <h2 id="about-title">About you</h2>
+              <p class="hint">Entirely optional. Leave these blank to stay anonymous on the form.</p>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="name">Your name <span class="tag-opt">Optional</span></label>
+              <input type="text" id="name" maxlength="80" autocomplete="name" placeholder="Leave blank to stay anonymous">
+            </div>
+            <div class="field">
+              <label for="role">How do you work with me? <span class="tag-opt">Optional</span></label>
+              <select id="role">
+                <option value="">Prefer not to say</option>
+                <option>Direct report</option>
+                <option>Peer / colleague</option>
+                <option>Manager</option>
+                <option>Stakeholder / client</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="team">Team or programme <span class="tag-opt">Optional</span></label>
+              <input type="text" id="team" maxlength="80" placeholder="Only if it helps me place the feedback">
+            </div>
+          </div>
+
+          <p class="hint" style="margin-top:14px">Your name is optional on this form, but GitHub records which account submits it in the commit history. If you want fully private feedback, <a href="mailto:pingkee.ng@gmail.com?subject=Leadership%20feedback">email me</a> instead.</p>
+        </section>
+
+        <!-- 04 -->
+        <section class="block" aria-labelledby="send-title">
+          <div class="block-head">
+            <span class="step" aria-hidden="true">04</span>
+            <div>
+              <h2 id="send-title">Send it</h2>
+              <p class="hint">Submitting commits a small JSON file to this site&rsquo;s GitHub repository. See &ldquo;Where this goes&rdquo; for the details.</p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="token">Your GitHub token</label>
+            <div class="token-row">
+              <input type="password" id="token" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+              <button type="button" class="ghost-btn" id="toggleToken" aria-pressed="false">Show</button>
+            </div>
+            <p class="hint" style="margin-top:7px">Used only for api.github.com, kept in this browser tab, and never stored on a server.</p>
+          </div>
+
+          <details class="token-help" id="tokenHelp">
+            <summary>Need a token? Three quick steps</summary>
+            <div class="details-body">
+              <ol>
+                <li>Ask me to add your GitHub account as a <strong>collaborator with write access</strong> on <a href="https://github.com/pingkee/Pkweb" target="_blank" rel="noopener">pingkee/Pkweb</a> &mdash; only people with write access can submit this way.</li>
+                <li>Create a fine-grained token at <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>. Set <strong>Repository access &rarr; Only select repositories &rarr; pingkee/Pkweb</strong>, and <strong>Permissions &rarr; Contents &rarr; Read and write</strong>.</li>
+                <li>Paste it above and submit. You can revoke the token on GitHub afterwards.</li>
+              </ol>
+              <p style="margin:0">No write access? Use one of the <em>Other ways to send</em> links on the right &mdash; they carry the same answers.</p>
+            </div>
+          </details>
+
+          <div class="status" id="status" role="status" aria-live="polite"></div>
+
+          <div class="submit-row">
+            <button class="btn btn-primary" type="submit" id="submitBtn">Submit feedback</button>
+            <button class="btn btn-quiet" type="button" id="downloadBtn">Download a copy</button>
+            <button class="clean-link" type="button" id="forgetTokenBtn" hidden>Forget token</button>
+          </div>
+        </section>
+      </form>
+
+      <div class="success" id="successPanel" role="status" aria-live="polite">
+        <div class="success-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+        </div>
+        <h2>Thank you &mdash; it&rsquo;s in.</h2>
+        <p id="successText">Your feedback was saved to the repository.</p>
+        <div class="actions">
+          <a class="btn btn-quiet" id="successLink" href="#" target="_blank" rel="noopener" hidden>View on GitHub &nearr;</a>
+          <button class="btn btn-quiet" type="button" id="downloadAfter">Download a copy</button>
+          <button class="btn btn-primary" type="button" id="sendAnother">Send more feedback</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="aside" aria-label="About this form">
+      <div class="card side-card">
+        <h2>Where this goes</h2>
+        <p>Submitting commits a small JSON file to <code>project-management/data/feedback/</code> in <a href="https://github.com/pingkee/Pkweb" target="_blank" rel="noopener">pingkee/Pkweb</a>. I read it there myself.</p>
+        <div class="notice">
+          <strong>This repository is public.</strong>
+          Anyone can read what you submit, and GitHub records the account that submits it. Please don&rsquo;t include anything confidential.
+        </div>
+        <p class="fine">Your token is sent only to api.github.com and stays in this browser tab. Revoke it on GitHub whenever you like.</p>
+      </div>
+
+      <div class="card side-card">
+        <h2>Other ways to send</h2>
+        <p>No write access, or want it private? These carry the same answers.</p>
+        <a class="side-link" href="mailto:pingkee.ng@gmail.com" id="emailLink">Email me directly <span class="arrow" aria-hidden="true">&nearr;</span></a>
+        <a class="side-link" href="https://github.com/pingkee/Pkweb/issues/new" id="issueLink" target="_blank" rel="noopener">Open a GitHub issue <span class="arrow" aria-hidden="true">&nearr;</span></a>
+      </div>
+
+      <div class="card side-card">
+        <h2>What happens next</h2>
+        <p>I read every response myself and use it to change how I work. If you&rsquo;d like to talk anything through, add your name and I&rsquo;ll follow up.</p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>&copy; <span id="year">2026</span> Ng Ping Kee. Built as a static site on GitHub Pages.</p>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/">Home</a>
+      <a href="/project-management/">Planner</a>
+      <a href="/financial-screener/">Screener</a>
+      <a href="mailto:pingkee.ng@gmail.com">Email</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var CONFIG = {
+    owner: 'pingkee',
+    repo: 'Pkweb',
+    branch: 'gh-pages',
+    dataDir: 'project-management/data/feedback',
+    email: 'pingkee.ng@gmail.com'
+  };
+
+  var TOKEN_KEY = 'pk_feedback_token';
+  var DRAFT_KEY = 'pk_feedback_draft_v1';
+  var DIMS = [
+    { id: 'direction',     label: 'Clear direction and priorities' },
+    { id: 'communication', label: 'Communication - timely, honest, two-way' },
+    { id: 'coaching',      label: 'Coaching and support for growth' },
+    { id: 'decisions',     label: 'Decision-making and problem solving' },
+    { id: 'fairness',      label: 'Fairness, respect, and inclusion' },
+    { id: 'feedback',      label: 'Feedback and recognition' },
+    { id: 'planning',      label: 'Planning workloads and protecting focus' },
+    { id: 'blockers',      label: 'Removing blockers and escalating' }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var form = $('feedbackForm');
+  var shell = $('formShell');
+  var tokenInput = $('token');
+  var statusEl = $('status');
+  var submitBtn = $('submitBtn');
+  var lastRecord = null;
+  var saveTimer = null;
+
+  /* ---------- Helpers ---------- */
+
+  function textOrNull(value) {
+    var s = String(value == null ? '' : value).trim();
+    return s ? s : null;
+  }
+
+  function setStatus(message, kind) {
+    statusEl.className = 'status show ' + (kind || 'info');
+    statusEl.textContent = message;
+  }
+
+  function clearStatus() {
+    statusEl.className = 'status';
+    statusEl.textContent = '';
+  }
+
+  function utf8ToBase64(str) {
+    var bytes = new TextEncoder().encode(str);
+    var binary = '';
+    for (var i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
+    return btoa(binary);
+  }
+
+  function fileName() {
+    var iso = new Date().toISOString().replace(/[:.]/g, '-');
+    // 2026-11-24T12-34-56-789Z -> 2026-11-24_12-34-56
+    var stamp = iso.slice(0, 19).replace('T', '_');
+    var rand = Math.random().toString(36).slice(2, 6);
+    return 'feedback_' + stamp + '_' + rand + '.json';
+  }
+
+  function readAnswers() {
+    var ratings = {};
+    var rawRatings = {};
+    DIMS.forEach(function (dim) {
+      var checked = document.querySelector('input[name="rate-' + dim.id + '"]:checked');
+      var value = checked ? checked.value : null;
+      rawRatings[dim.id] = value;
+      ratings[dim.id] = (value === null || value === 'na') ? null : Number(value);
+    });
+    return {
+      ratings: ratings,
+      rawRatings: rawRatings,
+      comments: {
+        working: $('working').value,
+        improve: $('improve').value,
+        suggestion: $('suggestion').value
+      },
+      about: {
+        name: $('name').value,
+        role: $('role').value,
+        team: $('team').value
+      }
+    };
+  }
+
+  function buildRecord() {
+    var answers = readAnswers();
+    var name = textOrNull(answers.about.name);
+    var team = textOrNull(answers.about.team);
+    return {
+      schemaVersion: 1,
+      submittedAt: new Date().toISOString(),
+      ratings: answers.ratings,
+      comments: {
+        working: textOrNull(answers.comments.working),
+        improve: textOrNull(answers.comments.improve),
+        suggestion: textOrNull(answers.comments.suggestion)
+      },
+      about: {
+        name: name,
+        role: textOrNull(answers.about.role),
+        team: team
+      },
+      anonymous: !(name || team)
+    };
+  }
+
+  function validate(record) {
+    var hasRating = DIMS.some(function (dim) { return record.ratings[dim.id] !== null; });
+    if (!hasRating && !record.comments.improve) {
+      return {
+        ok: false,
+        field: 'improve',
+        message: 'Add at least one rating, or tell me where you would like to see improvement.'
+      };
+    }
+    return { ok: true };
+  }
+
+  function markInvalid(id) {
+    var el = $(id);
+    if (!el) return;
+    el.setAttribute('aria-invalid', 'true');
+    el.focus();
+    el.addEventListener('blur', function handler() {
+      el.removeAttribute('aria-invalid');
+      el.removeEventListener('blur', handler);
+    });
+  }
+
+  /* ---------- Token storage (this tab only) ---------- */
+
+  function getToken() {
+    try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
+  }
+  function rememberToken(value) {
+    try { sessionStorage.setItem(TOKEN_KEY, value); } catch (e) {}
+    $('forgetTokenBtn').hidden = false;
+  }
+  function forgetToken() {
+    try { sessionStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    tokenInput.value = '';
+    $('forgetTokenBtn').hidden = true;
+  }
+
+  /* ---------- Draft autosave ---------- */
+
+  function saveDraft() {
+    if (shell.classList.contains('sent')) return;
+    try {
+      var answers = readAnswers();
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        rawRatings: answers.rawRatings,
+        working: answers.comments.working,
+        improve: answers.comments.improve,
+        suggestion: answers.comments.suggestion,
+        name: answers.about.name,
+        role: answers.about.role,
+        team: answers.about.team
+      }));
+    } catch (e) {}
+  }
+
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveDraft, 400);
+  }
+
+  function restoreDraft() {
+    var raw = null;
+    try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var draft;
+    try { draft = JSON.parse(raw); } catch (e) { return; }
+
+    var restored = false;
+    DIMS.forEach(function (dim) {
+      var value = draft.rawRatings && draft.rawRatings[dim.id];
+      if (value == null) return;
+      var el = document.querySelector('input[name="rate-' + dim.id + '"][value="' + value + '"]');
+      if (el) { el.checked = true; restored = true; }
+    });
+
+    [['working', draft.working], ['improve', draft.improve], ['suggestion', draft.suggestion],
+     ['name', draft.name], ['role', draft.role], ['team', draft.team]].forEach(function (pair) {
+      if (pair[1]) { $(pair[0]).value = pair[1]; restored = true; }
+    });
+
+    if (restored) $('draftNote').classList.add('show');
+    updateCounters();
+  }
+
+  function clearDraftStorage() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  }
+
+  /* ---------- Counters ---------- */
+
+  function updateCounters() {
+    Array.prototype.forEach.call(document.querySelectorAll('textarea[maxlength]'), function (area) {
+      var counter = document.querySelector('[data-for="' + area.id + '"]');
+      if (counter) counter.textContent = String(area.value.length);
+    });
+  }
+
+  /* ---------- GitHub commit ---------- */
+
+  function ghError(res) {
+    if (res.status === 401) return 'GitHub rejected the token. Check that it is correct and not expired, then try again.';
+    if (res.status === 403) return 'This GitHub account cannot write to ' + CONFIG.owner + '/' + CONFIG.repo + '. I need to add you as a collaborator with write access, and the token needs Contents: Read and write.';
+    if (res.status === 404) return 'GitHub could not find ' + CONFIG.owner + '/' + CONFIG.repo + ' or its ' + CONFIG.branch + ' branch. Check that the token can access this repository.';
+    if (res.status === 409 || res.status === 422) return 'The file changed while submitting. Please try again.';
+    return 'GitHub returned an error (' + res.status + '). Try again in a moment.';
+  }
+
+  async function commitFeedback(token, record) {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var name = fileName();
+      var path = '/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' +
+        CONFIG.dataDir + '/' + encodeURIComponent(name);
+      var body = {
+        message: 'Add leadership feedback (' + record.submittedAt.slice(0, 10) + ')',
+        content: utf8ToBase64(JSON.stringify(record, null, 2) + '\n'),
+        branch: CONFIG.branch
+      };
+      var res = await fetch('https://api.github.com' + path, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body),
+        cache: 'no-store'
+      });
+
+      if (res.ok) {
+        var json = await res.json();
+        return {
+          url: json && json.commit ? json.commit.html_url : null,
+          path: json && json.content ? json.content.path : null,
+          name: name
+        };
+      }
+      if ((res.status === 409 || res.status === 422) && attempt === 0) continue;
+
+      var err = new Error(ghError(res));
+      err.status = res.status;
+      throw err;
+    }
+    throw new Error('Could not create a unique file name. Please try again.');
+  }
+
+  /* ---------- Submit ---------- */
+
+  function setBusy(busy) {
+    submitBtn.disabled = busy;
+    submitBtn.textContent = busy ? 'Submitting…' : 'Submit feedback';
+  }
+
+  async function onSubmit(event) {
+    event.preventDefault();
+    clearStatus();
+
+    var record = buildRecord();
+    var check = validate(record);
+    if (!check.ok) {
+      setStatus(check.message, 'error');
+      markInvalid(check.field);
+      return;
+    }
+
+    var token = tokenInput.value.trim() || getToken();
+    if (!token) {
+      $('tokenHelp').open = true;
+      setStatus('Add your GitHub token to submit, or use one of the other ways to send it in the sidebar.', 'warn');
+      tokenInput.focus();
+      return;
+    }
+
+    rememberToken(token);
+    setBusy(true);
+    setStatus('Submitting to GitHub…', 'info');
+
+    try {
+      var result = await commitFeedback(token, record);
+      showSuccess(result, record);
+    } catch (err) {
+      if (err.status === 401) forgetToken();
+      setStatus(err.message || 'Could not submit. Check your connection and try again.', 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function showSuccess(result, record) {
+    lastRecord = record;
+    clearDraftStorage();
+    forgetToken();
+    clearStatus();
+    form.reset();
+    updateCounters();
+    $('draftNote').classList.remove('show');
+
+    var link = $('successLink');
+    if (result.url) { link.href = result.url; link.hidden = false; }
+    else { link.hidden = true; }
+    $('successText').textContent = result.path
+      ? 'Your feedback was saved as ' + result.path + ' in the repository.'
+      : 'Your feedback was saved to the repository.';
+
+    shell.classList.add('sent');
+    shell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function sendAnother() {
+    shell.classList.remove('sent');
+    form.reset();
+    lastRecord = null;
+    clearStatus();
+    updateCounters();
+    $('draftNote').classList.remove('show');
+    $('successLink').hidden = true;
+    shell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ---------- Download / email / issue fallbacks ---------- */
+
+  function downloadRecord(record) {
+    var blob = new Blob([JSON.stringify(record, null, 2) + '\n'], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'leadership-feedback-' + record.submittedAt.slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function emailBody(record) {
+    var lines = ['Feedback on leadership and management', ''];
+    var rated = DIMS.filter(function (dim) { return record.ratings[dim.id] !== null; });
+    if (rated.length) {
+      lines.push('Ratings (1 = needs work, 5 = excellent)');
+      rated.forEach(function (dim) { lines.push('- ' + dim.label + ': ' + record.ratings[dim.id] + '/5'); });
+      lines.push('');
+    }
+    if (record.comments.working) { lines.push("What's working well:"); lines.push(record.comments.working); lines.push(''); }
+    if (record.comments.improve) { lines.push('Where I would like improvement:'); lines.push(record.comments.improve); lines.push(''); }
+    if (record.comments.suggestion) { lines.push('Suggestion or example:'); lines.push(record.comments.suggestion); lines.push(''); }
+    var who = [record.about.name, record.about.role, record.about.team].filter(Boolean).join(' · ');
+    lines.push(who ? 'From: ' + who : 'From: anonymous');
+    return lines.join('\n');
+  }
+
+  function openEmail(event) {
+    event.preventDefault();
+    var record = buildRecord();
+    var subject = 'Leadership feedback' + (record.about.name ? ' from ' + record.about.name : '');
+    var body = emailBody(record);
+    if (body.length > 1600) body = body.slice(0, 1600) + '\n\n[trimmed - the full version is in my download]';
+    window.location.href = 'mailto:' + CONFIG.email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  }
+
+  function openIssue(event) {
+    event.preventDefault();
+    var record = buildRecord();
+    var title = 'Leadership feedback' + (record.about.name ? ' from ' + record.about.name : ' (anonymous)');
+    var body = 'Feedback submitted from the leadership feedback page.\n\n```json\n' + JSON.stringify(record, null, 2) + '\n```';
+    var url = 'https://github.com/' + CONFIG.owner + '/' + CONFIG.repo + '/issues/new?title=' +
+      encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
+    window.open(url, '_blank', 'noopener');
+  }
+
+  /* ---------- Wire up ---------- */
+
+  form.addEventListener('submit', onSubmit);
+  form.addEventListener('input', scheduleSave);
+  form.addEventListener('change', scheduleSave);
+
+  Array.prototype.forEach.call(document.querySelectorAll('textarea[maxlength]'), function (area) {
+    area.addEventListener('input', updateCounters);
+  });
+
+  $('toggleToken').addEventListener('click', function () {
+    var showing = tokenInput.type === 'text';
+    tokenInput.type = showing ? 'password' : 'text';
+    this.textContent = showing ? 'Show' : 'Hide';
+    this.setAttribute('aria-pressed', String(!showing));
+  });
+
+  $('forgetTokenBtn').addEventListener('click', function () {
+    forgetToken();
+    clearStatus();
+    setStatus('Saved token cleared from this browser tab.', 'ok');
+  });
+
+  $('downloadBtn').addEventListener('click', function () { downloadRecord(buildRecord()); });
+  $('downloadAfter').addEventListener('click', function () { downloadRecord(lastRecord || buildRecord()); });
+  $('sendAnother').addEventListener('click', sendAnother);
+
+  $('clearDraft').addEventListener('click', function () {
+    clearDraftStorage();
+    form.reset();
+    updateCounters();
+    $('draftNote').classList.remove('show');
+    clearStatus();
+  });
+
+  $('emailLink').addEventListener('click', openEmail);
+  $('issueLink').addEventListener('click', openIssue);
+
+  $('year').textContent = String(new Date().getFullYear());
+
+  // Theme toggle (same preference key as the rest of the site).
+  (function initTheme() {
+    var root = document.documentElement;
+    var button = $('themeToggle');
+    var meta = $('themeColor');
+    function apply(theme) {
+      root.dataset.theme = theme;
+      if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b1220' : '#f7f6f2');
+      button.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+      button.setAttribute('aria-pressed', String(theme === 'dark'));
+    }
+    button.addEventListener('click', function () {
+      var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      apply(next);
+      try { localStorage.setItem('npk-theme', next); } catch (e) {}
+    });
+    apply(root.dataset.theme || 'light');
+  })();
+
+  // Restore any saved token and draft.
+  var storedToken = getToken();
+  if (storedToken) {
+    tokenInput.value = storedToken;
+    $('forgetTokenBtn').hidden = false;
+  }
+  restoreDraft();
+  updateCounters();
+})();
+</script>
+</body>
+</html>
